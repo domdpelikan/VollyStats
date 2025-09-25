@@ -27,7 +27,7 @@
     <div id="app" class="max-w-xl mx-auto p-4 min-h-screen">
         <header class="text-center my-6">
             <h1 class="text-3xl font-bold text-indigo-600">Volleyball Stat Keeper</h1>
-            <p class="text-gray-500 mt-1">Manage your roster and track passing stats in real-time.</p>
+            <p class="text-gray-500 mt-1">Manage your roster and track passing stats automatically.</p>
         </header>
 
         <!-- Tab Navigation -->
@@ -47,7 +47,6 @@
             </div>
             <div id="roster-list" class="mt-6 space-y-3">
                 <!-- Player items will be dynamically inserted here -->
-                <div id="roster-loading" class="text-center p-4 text-gray-500">Loading roster...</div>
             </div>
         </div>
 
@@ -66,276 +65,253 @@
             </div>
             <div id="stats-list" class="mt-6 space-y-3">
                  <!-- Stats for each player will be dynamically inserted here -->
-                 <div id="stats-loading" class="text-center p-4 text-gray-500">Loading players...</div>
+            </div>
+            <div class="mt-8 text-center">
+                <button id="download-csv-btn" class="bg-green-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
+                    Download All Stats (CSV)
+                </button>
             </div>
         </div>
 
     </div>
 
-    <script type="module">
-        // Firebase Imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, getDoc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- App State ---
+            let selectedRating = null;
+            let playersCache = []; // To hold player data
 
-        // --- Firebase Configuration & Initialization ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO", authDomain: "DEMO", projectId: "DEMO" };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-volleyball-stats';
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        setLogLevel('debug');
+            // --- Date Management ---
+            const today = new Date();
+            const todayKey = today.toISOString().split('T')[0]; // YYYY-MM-DD format for db key
+            const practiceDateDisplay = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); // "Thu, Sep 25"
 
-        // --- App State ---
-        let selectedRating = null;
-        let playersCache = []; // To hold player data
+            // --- UI Element References ---
+            const rosterTabBtn = document.getElementById('roster-tab-btn');
+            const statsTabBtn = document.getElementById('stats-tab-btn');
+            const rosterSection = document.getElementById('roster-section');
+            const statsSection = document.getElementById('stats-section');
+            const playerNameInput = document.getElementById('player-name-input');
+            const addPlayerBtn = document.getElementById('add-player-btn');
+            const rosterList = document.getElementById('roster-list');
+            const statsList = document.getElementById('stats-list');
+            const ratingButtonsContainer = document.getElementById('rating-buttons');
+            const ratingHelper = document.getElementById('rating-helper');
+            const practiceDateEl = document.getElementById('practice-date');
+            const downloadCsvBtn = document.getElementById('download-csv-btn');
+            practiceDateEl.textContent = `(${practiceDateDisplay})`;
 
-        // --- Date Management ---
-        const today = new Date();
-        const todayKey = today.toISOString().split('T')[0]; // YYYY-MM-DD format for db key
-        const practiceDateDisplay = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); // "Thu, Sep 25"
+            // --- Local Storage Logic ---
+            const STORAGE_KEY = 'volleyball_stats_roster';
 
-        // --- UI Element References ---
-        const rosterTabBtn = document.getElementById('roster-tab-btn');
-        const statsTabBtn = document.getElementById('stats-tab-btn');
-        const rosterSection = document.getElementById('roster-section');
-        const statsSection = document.getElementById('stats-section');
-        const playerNameInput = document.getElementById('player-name-input');
-        const addPlayerBtn = document.getElementById('add-player-btn');
-        const rosterList = document.getElementById('roster-list');
-        const statsList = document.getElementById('stats-list');
-        const ratingButtonsContainer = document.getElementById('rating-buttons');
-        const ratingHelper = document.getElementById('rating-helper');
-        const practiceDateEl = document.getElementById('practice-date');
-        practiceDateEl.textContent = `(${practiceDateDisplay})`;
-
-        // --- Firestore Collection Reference ---
-        const rosterCollectionPath = `artifacts/${appId}/public/data/roster`;
-        const rosterCollectionRef = collection(db, rosterCollectionPath);
-
-        // --- Authentication ---
-        async function setupAuth() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+            const loadDataFromLocalStorage = () => {
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    playersCache = JSON.parse(savedData);
                 } else {
-                    await signInAnonymously(auth);
+                    playersCache = [];
                 }
-                console.log("Authentication successful. User UID:", auth.currentUser?.uid);
-                listenForRosterChanges(); // Start listening for data after auth
-            } catch (error) {
-                console.error("Authentication failed:", error);
-                rosterList.innerHTML = `<div class="text-center p-4 text-red-500">Could not connect to the database.</div>`;
-                statsList.innerHTML = `<div class="text-center p-4 text-red-500">Could not connect to the database.</div>`;
-            }
-        }
-        
-        // --- UI Rendering ---
-        const renderRosterList = (players) => {
-            const loadingRoster = document.getElementById('roster-loading');
-            if (loadingRoster) loadingRoster.remove();
+                renderAll();
+            };
+
+            const saveDataToLocalStorage = () => {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(playersCache));
+            };
             
-            if (players.length === 0) {
-                rosterList.innerHTML = `<div class="text-center p-4 bg-white rounded-lg shadow-md text-gray-500">Your roster is empty. Add a player to get started!</div>`;
-                return;
-            }
-
-            rosterList.innerHTML = players.map(player => `
-                <div class="bg-white p-4 rounded-lg shadow-md flex justify-between items-center">
-                    <span class="font-medium text-lg">${player.name}</span>
-                    <button data-id="${player.id}" class="delete-player-btn text-red-500 hover:text-red-700 font-semibold transition-colors">Remove</button>
-                </div>
-            `).join('');
-        };
-
-        const renderStatsList = (players) => {
-            const loadingStats = document.getElementById('stats-loading');
-            if(loadingStats) loadingStats.remove();
-
-            if (players.length === 0) {
-                statsList.innerHTML = `<div class="text-center p-4 bg-white rounded-lg shadow-md text-gray-500">Add players to the roster to start tracking stats.</div>`;
-                return;
-            }
-
-            statsList.innerHTML = players.map(player => {
-                const statsByDate = player.statsByDate || {};
-                const todayPasses = statsByDate[todayKey] || [];
-                const passCount = todayPasses.length;
-                const passSum = todayPasses.reduce((sum, current) => sum + current, 0);
-                const average = passCount > 0 ? (passSum / passCount).toFixed(2) : '0.00';
-
-                const pastPracticeKeys = Object.keys(statsByDate).filter(key => key !== todayKey).sort().reverse();
-                
-                let historyHtml = '<p class="text-xs text-gray-400 italic">No past practices recorded.</p>';
-                if (pastPracticeKeys.length > 0) {
-                    historyHtml = pastPracticeKeys.map(dateKey => {
-                        const passes = statsByDate[dateKey] || [];
-                        const count = passes.length;
-                        if (count === 0) return '';
-                        const sum = passes.reduce((s, c) => s + c, 0);
-                        const avg = (sum/count).toFixed(2);
-                        const displayDate = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                        return `<div class="text-sm text-gray-600">${displayDate}: <span class="font-semibold">Avg ${avg}</span> (${count} passes)</div>`;
-                    }).join('');
-                }
-
-                return `
-                <div class="bg-white p-4 rounded-lg shadow-md space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-bold text-lg text-indigo-700">${player.name}</h3>
-                            <p class="text-sm text-gray-500">Today's Avg: <span class="font-semibold text-xl text-gray-800">${average}</span></p>
-                        </div>
-                        <button data-id="${player.id}" class="assign-pass-btn bg-indigo-500 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed" ${selectedRating === null ? 'disabled' : ''}>Assign</button>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded-md">
-                        <p class="text-xs text-gray-500">Today's Passes (${passCount} total):</p>
-                        <p class="text-gray-700 break-all">${todayPasses.length > 0 ? todayPasses.join(', ') : 'No passes recorded for today.'}</p>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded-md">
-                        <p class="text-xs font-semibold text-gray-600 mb-1">Practice History</p>
-                        <div class="space-y-1">${historyHtml}</div>
-                    </div>
-                </div>
-                `
-            }).join('');
-        };
-
-        // --- Firestore Logic ---
-        const listenForRosterChanges = () => {
-            onSnapshot(rosterCollectionRef, (snapshot) => {
-                playersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Sort players alphabetically by name
+            // --- UI Rendering ---
+            const renderAll = () => {
                 playersCache.sort((a, b) => a.name.localeCompare(b.name));
-                
                 renderRosterList(playersCache);
                 renderStatsList(playersCache);
-            }, (error) => {
-                console.error("Error listening to roster changes: ", error);
-                 rosterList.innerHTML = `<div class="text-center p-4 text-red-500">Error fetching roster.</div>`;
-                 statsList.innerHTML = `<div class="text-center p-4 text-red-500">Error fetching players.</div>`;
-            });
-        };
+            };
 
-        const handleAddPlayer = async () => {
-            const name = playerNameInput.value.trim();
-            if (name) {
-                try {
-                    await addDoc(rosterCollectionRef, {
+            const renderRosterList = (players) => {
+                if (players.length === 0) {
+                    rosterList.innerHTML = `<div class="text-center p-4 bg-white rounded-lg shadow-md text-gray-500">Your roster is empty. Add a player to get started!</div>`;
+                    return;
+                }
+
+                rosterList.innerHTML = players.map(player => `
+                    <div class="bg-white p-4 rounded-lg shadow-md flex justify-between items-center">
+                        <span class="font-medium text-lg">${player.name}</span>
+                        <button data-id="${player.id}" class="delete-player-btn text-red-500 hover:text-red-700 font-semibold transition-colors">Remove</button>
+                    </div>
+                `).join('');
+            };
+
+            const renderStatsList = (players) => {
+                if (players.length === 0) {
+                    statsList.innerHTML = `<div class="text-center p-4 bg-white rounded-lg shadow-md text-gray-500">Add players to the roster to start tracking stats.</div>`;
+                    downloadCsvBtn.disabled = true;
+                    return;
+                }
+                
+                downloadCsvBtn.disabled = false;
+
+                statsList.innerHTML = players.map(player => {
+                    const statsByDate = player.statsByDate || {};
+                    const todayPasses = statsByDate[todayKey] || [];
+                    const passCount = todayPasses.length;
+                    const passSum = todayPasses.reduce((sum, current) => sum + current, 0);
+                    const average = passCount > 0 ? (passSum / passCount).toFixed(2) : '0.00';
+
+                    const pastPracticeKeys = Object.keys(statsByDate).filter(key => key !== todayKey).sort().reverse();
+                    
+                    let historyHtml = '<p class="text-xs text-gray-400 italic">No past practices recorded.</p>';
+                    if (pastPracticeKeys.length > 0) {
+                        historyHtml = pastPracticeKeys.map(dateKey => {
+                            const passes = statsByDate[dateKey] || [];
+                            const count = passes.length;
+                            if (count === 0) return '';
+                            const sum = passes.reduce((s, c) => s + c, 0);
+                            const avg = (sum/count).toFixed(2);
+                            const displayDate = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            return `<div class="text-sm text-gray-600">${displayDate}: <span class="font-semibold">Avg ${avg}</span> (${count} passes)</div>`;
+                        }).join('');
+                    }
+
+                    return `
+                    <div class="bg-white p-4 rounded-lg shadow-md space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-lg text-indigo-700">${player.name}</h3>
+                                <p class="text-sm text-gray-500">Today's Avg: <span class="font-semibold text-xl text-gray-800">${average}</span></p>
+                            </div>
+                            <button data-id="${player.id}" class="assign-pass-btn bg-indigo-500 text-white font-semibold px-5 py-2 rounded-md hover:bg-indigo-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed" ${selectedRating === null ? 'disabled' : ''}>Assign</button>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <p class="text-xs text-gray-500">Today's Passes (${passCount} total):</p>
+                            <p class="text-gray-700 break-all">${todayPasses.length > 0 ? todayPasses.join(', ') : 'No passes recorded for today.'}</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-md">
+                            <p class="text-xs font-semibold text-gray-600 mb-1">Practice History</p>
+                            <div class="space-y-1">${historyHtml}</div>
+                        </div>
+                    </div>
+                    `
+                }).join('');
+            };
+
+            // --- Core Logic Functions ---
+            const handleAddPlayer = () => {
+                const name = playerNameInput.value.trim();
+                if (name) {
+                    const newPlayer = {
+                        id: Date.now().toString(), // Simple unique ID
                         name: name,
-                        statsByDate: {} // Initialize with an empty object for stats
-                    });
+                        statsByDate: {}
+                    };
+                    playersCache.push(newPlayer);
                     playerNameInput.value = '';
-                } catch (error) {
-                    console.error("Error adding player: ", error);
-                    alert("Could not add player. Please try again.");
+                    saveDataToLocalStorage();
+                    renderAll();
                 }
-            }
-        };
+            };
 
-        const handleDeletePlayer = async (playerId) => {
-            // Using a custom modal/confirm is better, but confirm is simple for this example.
-            const isConfirmed = window.confirm("Are you sure you want to remove this player? All their stats will be deleted.");
-            if (isConfirmed) {
-                try {
-                    await deleteDoc(doc(db, rosterCollectionPath, playerId));
-                } catch (error) {
-                    console.error("Error deleting player: ", error);
-                    alert("Could not remove player. Please try again.");
+            const handleDeletePlayer = (playerId) => {
+                if (window.confirm("Are you sure you want to remove this player?")) {
+                    playersCache = playersCache.filter(p => p.id !== playerId);
+                    saveDataToLocalStorage();
+                    renderAll();
                 }
-            }
-        };
-        
-        const handleAssignPass = async (playerId) => {
-            if (selectedRating === null) {
-                // This alert is a fallback, the button should be disabled.
-                alert("Please select a rating first.");
-                return;
-            }
-
-            try {
-                const playerDocRef = doc(db, rosterCollectionPath, playerId);
-                const playerDocSnap = await getDoc(playerDocRef);
-
-                if (playerDocSnap.exists()) {
-                    const currentStats = playerDocSnap.data().statsByDate || {};
+            };
+            
+            const handleAssignPass = (playerId) => {
+                if (selectedRating === null) return;
+                const player = playersCache.find(p => p.id === playerId);
+                if (player) {
+                    const currentStats = player.statsByDate || {};
                     const todayPasses = currentStats[todayKey] || [];
-                    
                     const updatedTodayPasses = [...todayPasses, selectedRating];
-                    const updatedStats = { ...currentStats, [todayKey]: updatedTodayPasses };
-
-                    await updateDoc(playerDocRef, { statsByDate: updatedStats });
+                    player.statsByDate[todayKey] = updatedTodayPasses;
                     
-                    // Reset selection after assigning, but don't clear the helper text immediately
-                    // so user knows what they last did.
+                    saveDataToLocalStorage();
+                    renderAll();
+                    
                     document.querySelectorAll('.rating-button').forEach(btn => btn.classList.remove('active'));
                     document.querySelectorAll('.assign-pass-btn').forEach(btn => btn.disabled = true);
                     ratingHelper.textContent = `Assigned '${selectedRating}'! Select a new rating.`;
                     selectedRating = null;
-
-                } else {
-                    console.error("Player document not found.");
                 }
-            } catch (error) {
-                console.error("Error assigning pass: ", error);
-                alert("Could not assign pass. Please try again.");
-            }
-        };
+            };
+            
+            const handleDownloadCSV = () => {
+                if (playersCache.length === 0) {
+                    alert("There are no players to export.");
+                    return;
+                }
 
+                let csvContent = "Player Name,Overall Passing Average\n";
 
-        // --- Event Listeners ---
-        rosterTabBtn.addEventListener('click', () => {
-            rosterSection.classList.remove('hidden');
-            statsSection.classList.add('hidden');
-            rosterTabBtn.classList.add('active');
-            statsTabBtn.classList.remove('active');
+                playersCache.forEach(player => {
+                    const statsByDate = player.statsByDate || {};
+                    const allPasses = Object.values(statsByDate).flat();
+                    const passCount = allPasses.length;
+                    const passSum = allPasses.reduce((sum, current) => sum + current, 0);
+                    const overallAverage = passCount > 0 ? (passSum / passCount).toFixed(2) : '0.00';
+                    csvContent += `"${player.name}",${overallAverage}\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8,' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                const exportDate = new Date().toISOString().split('T')[0];
+                link.setAttribute("download", `volleyball_stats_${exportDate}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            // --- Event Listeners ---
+            rosterTabBtn.addEventListener('click', () => {
+                rosterSection.classList.remove('hidden');
+                statsSection.classList.add('hidden');
+                rosterTabBtn.classList.add('active');
+                statsTabBtn.classList.remove('active');
+            });
+
+            statsTabBtn.addEventListener('click', () => {
+                rosterSection.classList.add('hidden');
+                statsSection.classList.remove('hidden');
+                rosterTabBtn.classList.remove('active');
+                statsTabBtn.classList.add('active');
+            });
+            
+            addPlayerBtn.addEventListener('click', handleAddPlayer);
+            playerNameInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') handleAddPlayer();
+            });
+
+            rosterList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-player-btn')) {
+                    handleDeletePlayer(e.target.dataset.id);
+                }
+            });
+
+            ratingButtonsContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('.rating-button');
+                if (button) {
+                    selectedRating = parseInt(button.dataset.rating, 10);
+                    document.querySelectorAll('.rating-button').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    document.querySelectorAll('.assign-pass-btn').forEach(btn => btn.disabled = false);
+                    ratingHelper.textContent = `Selected '${selectedRating}'. Now tap 'Assign' for a player.`;
+                }
+            });
+
+            statsList.addEventListener('click', (e) => {
+                 if (e.target.classList.contains('assign-pass-btn')) {
+                    handleAssignPass(e.target.dataset.id);
+                }
+            });
+            
+            downloadCsvBtn.addEventListener('click', handleDownloadCSV);
+
+            // --- App Initialization ---
+            loadDataFromLocalStorage();
         });
-
-        statsTabBtn.addEventListener('click', () => {
-            rosterSection.classList.add('hidden');
-            statsSection.classList.remove('hidden');
-            rosterTabBtn.classList.remove('active');
-            statsTabBtn.classList.add('active');
-        });
-        
-        addPlayerBtn.addEventListener('click', handleAddPlayer);
-        playerNameInput.addEventListener('keyup', (event) => {
-            if (event.key === 'Enter') {
-                handleAddPlayer();
-            }
-        });
-
-        rosterList.addEventListener('click', (e) => {
-            if (e.target.classList.contains('delete-player-btn')) {
-                const id = e.target.dataset.id;
-                handleDeletePlayer(id);
-            }
-        });
-
-        ratingButtonsContainer.addEventListener('click', (e) => {
-            const button = e.target.closest('.rating-button');
-            if (button) {
-                selectedRating = parseInt(button.dataset.rating, 10);
-                
-                document.querySelectorAll('.rating-button').forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-
-                document.querySelectorAll('.assign-pass-btn').forEach(btn => btn.disabled = false);
-                ratingHelper.textContent = `Selected '${selectedRating}'. Now tap 'Assign' for a player.`;
-            }
-        });
-
-        statsList.addEventListener('click', (e) => {
-             if (e.target.classList.contains('assign-pass-btn')) {
-                const id = e.target.dataset.id;
-                handleAssignPass(id);
-            }
-        });
-
-
-        // --- App Initialization ---
-        setupAuth();
     </script>
 </body>
 </html>
