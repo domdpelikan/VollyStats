@@ -35,17 +35,25 @@
             <div class="w-full max-w-sm text-center">
                 <h1 class="text-3xl font-bold text-indigo-600 mb-2">Stats</h1>
                 <p class="text-gray-500 mb-8">Pulse 16's</p>
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-xl font-semibold mb-4">Join a Team Roster</h2>
-                    <input type="text" id="team-code-input" placeholder="Enter 6-digit team code" maxlength="6" class="w-full px-4 py-3 border border-gray-300 rounded-md text-center uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button id="join-team-btn" class="w-full mt-3 bg-indigo-600 text-white font-semibold py-3 rounded-md hover:bg-indigo-700 transition">Join Roster</button>
-                    <div class="relative flex py-5 items-center">
+                <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
+                    <div>
+                        <h2 class="text-xl font-semibold mb-3">Join a Team Roster</h2>
+                        <input type="text" id="join-team-code-input" placeholder="Enter team code" maxlength="8" class="w-full px-4 py-3 border border-gray-300 rounded-md text-center uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button id="join-team-btn" class="w-full mt-3 bg-indigo-600 text-white font-semibold py-3 rounded-md hover:bg-indigo-700 transition">Join Roster</button>
+                    </div>
+
+                    <div class="relative flex py-2 items-center">
                         <div class="flex-grow border-t border-gray-200"></div>
                         <span class="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
                         <div class="flex-grow border-t border-gray-200"></div>
                     </div>
-                    <button id="create-team-btn" class="w-full bg-green-600 text-white font-semibold py-3 rounded-md hover:bg-green-700 transition">Create a New Team</button>
-                    <p id="team-error" class="text-red-500 text-sm h-5 mt-3"></p>
+
+                    <div>
+                        <h2 class="text-xl font-semibold mb-3">Create a New Team</h2>
+                        <input type="text" id="create-team-code-input" placeholder="Enter a custom code (4-8 chars)" maxlength="8" class="w-full px-4 py-3 border border-gray-300 rounded-md text-center uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <button id="create-team-btn" class="w-full mt-3 bg-green-600 text-white font-semibold py-3 rounded-md hover:bg-green-700 transition">Create Team</button>
+                    </div>
+                    <p id="team-error" class="text-red-500 text-sm h-5 pt-2"></p>
                 </div>
             </div>
         </div>
@@ -54,7 +62,7 @@
         <div id="main-app-section" class="hidden">
             <header class="text-center my-6">
                 <h1 class="text-3xl font-bold text-indigo-600">Stats</h1>
-                <p class="text-gray-500 mt-1">Pulse 16's</p>
+                <p class="text-gray-500 mt-1">Pulse Athletics</p>
                  <div class="mt-4">
                     <span class="text-sm text-gray-500">Team Code:</span>
                     <span id="team-code-display" class="font-mono bg-indigo-100 text-indigo-700 text-lg font-bold p-2 rounded-md tracking-widest" title="Click to copy"></span>
@@ -163,7 +171,8 @@
         // --- UI Element References ---
         const teamSelectionSection = document.getElementById('team-selection-section');
         const mainAppSection = document.getElementById('main-app-section');
-        const teamCodeInput = document.getElementById('team-code-input');
+        const joinTeamCodeInput = document.getElementById('join-team-code-input');
+        const createTeamCodeInput = document.getElementById('create-team-code-input');
         const joinTeamBtn = document.getElementById('join-team-btn');
         const createTeamBtn = document.getElementById('create-team-btn');
         const teamError = document.getElementById('team-error');
@@ -205,9 +214,9 @@
         };
 
         const handleJoinTeam = async () => {
-            const teamId = teamCodeInput.value.trim().toUpperCase();
-            if (teamId.length !== 6) {
-                teamError.textContent = "Please enter a 6-character code.";
+            const teamId = joinTeamCodeInput.value.trim().toUpperCase();
+            if (!teamId) {
+                teamError.textContent = "Please enter a team code.";
                 return;
             }
             teamError.textContent = "";
@@ -226,11 +235,33 @@
         };
 
         const handleCreateTeam = async () => {
-            const newTeamId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const newTeamId = createTeamCodeInput.value.trim().toUpperCase();
+            
+            // Validation
+            if (newTeamId.length < 4 || newTeamId.length > 8) {
+                teamError.textContent = "Code must be 4-8 characters long.";
+                return;
+            }
+            if (!/^[A-Z0-9]+$/.test(newTeamId)) {
+                teamError.textContent = "Code can only contain letters and numbers.";
+                return;
+            }
+            
+            teamError.textContent = "";
             const teamDocRef = doc(db, "teams", newTeamId);
+            
             try {
+                // Check if team code already exists
+                const teamDocSnap = await getDoc(teamDocRef);
+                if (teamDocSnap.exists()) {
+                    teamError.textContent = "This team code is already taken. Try another.";
+                    return;
+                }
+
+                // Create the new team
                 await setDoc(teamDocRef, { createdAt: new Date() });
                 loadTeam(newTeamId);
+
             } catch (error) {
                 console.error("Error creating team:", error);
                 teamError.textContent = "Could not create a new team.";
@@ -242,7 +273,8 @@
             currentTeamId = null;
             rosterCollectionRef = null;
             playersCache = [];
-            teamCodeInput.value = '';
+            joinTeamCodeInput.value = '';
+            createTeamCodeInput.value = '';
             mainAppSection.classList.add('hidden');
             teamSelectionSection.classList.remove('hidden');
         };
@@ -434,8 +466,10 @@
 
         // --- Event Listeners ---
         joinTeamBtn.addEventListener('click', handleJoinTeam);
-        teamCodeInput.addEventListener('keyup', (e) => { if(e.key === 'Enter') handleJoinTeam(); });
         createTeamBtn.addEventListener('click', handleCreateTeam);
+        joinTeamCodeInput.addEventListener('keyup', (e) => { if(e.key === 'Enter') handleJoinTeam(); });
+        createTeamCodeInput.addEventListener('keyup', (e) => { if(e.key === 'Enter') handleCreateTeam(); });
+
         switchTeamBtn.addEventListener('click', handleSwitchTeam);
         teamCodeDisplay.addEventListener('click', () => {
             navigator.clipboard.writeText(currentTeamId).then(() => {
