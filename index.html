@@ -79,16 +79,15 @@
                 <h1 class="text-3xl font-bold text-indigo-600">Stats</h1>
                 <p class="text-gray-500 mt-1">Pulse 16's</p>
                  <div class="mt-4">
-                    <span class="text-sm text-gray-500">Team Code:</span>
-                    <span id="team-code-display" class="font-mono bg-indigo-100 text-indigo-700 text-lg font-bold p-2 rounded-md tracking-widest" title="Click to copy"></span>
+                     <span class="text-sm text-gray-500">Team Code:</span>
+                     <span id="team-code-display" class="font-mono bg-indigo-100 text-indigo-700 text-lg font-bold p-2 rounded-md tracking-widest" title="Click to copy"></span>
                      <button id="switch-team-btn" class="ml-2 text-sm text-indigo-600 hover:underline">Switch</button>
-                </div>
+                 </div>
             </header>
 
             <!-- Main Header Tabs -->
             <div class="flex justify-center border-b border-gray-300 mb-4">
-                <button id="main-passing-tab-btn" class="main-tab-button active">Passing</button>
-                <button id="main-hitting-tab-btn" class="main-tab-button">Hitting</button>
+                <button id="main-passing-tab-btn" class="main-tab-button active w-full">Passing</button>
             </div>
 
             <!-- Passing Content Section -->
@@ -104,46 +103,46 @@
                 <!-- Roster Management Section -->
                 <div id="roster-section">
                      <div class="bg-white p-6 rounded-lg shadow-md">
-                        <h2 class="text-xl font-semibold mb-4">Add Player to Roster</h2>
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <input type="text" id="player-name-input" placeholder="Enter player's name" class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <select id="player-position-select" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                                <option value="Libero">Libero</option>
-                                <option value="Outside">Outside</option>
-                                <option value="Middle">Middle</option>
-                                <option value="Opposite">Opposite</option>
-                                <option value="Setter">Setter</option>
-                            </select>
-                            <button id="add-player-btn" class="w-full sm:w-auto bg-indigo-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 ease-in-out">Add Player</button>
-                        </div>
-                    </div>
-                    <div id="roster-list" class="mt-6 space-y-3">
-                        <div id="roster-loading" class="text-center p-4 text-gray-500">Loading roster...</div>
-                    </div>
+                         <h2 class="text-xl font-semibold mb-4">Add Player to Roster</h2>
+                         <div class="flex flex-col sm:flex-row gap-3">
+                             <input type="text" id="player-name-input" placeholder="Enter player's name" class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                             <select id="player-position-select" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                                 <option value="Libero">Libero</option>
+                                 <option value="Outside">Outside</option>
+                                 <option value="Middle">Middle</option>
+                                 <option value="Opposite">Opposite</option>
+                                 <option value="Setter">Setter</option>
+                             </select>
+                             <button id="add-player-btn" class="w-full sm:w-auto bg-indigo-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 ease-in-out">Add Player</button>
+                         </div>
+                     </div>
+                     <div id="roster-list" class="mt-6 space-y-3">
+                         <div id="roster-loading" class="text-center p-4 text-gray-500">Loading roster...</div>
+                     </div>
                 </div>
 
                 <!-- Passing Stats Section -->
                 <div id="stats-section" class="hidden">
-                     <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
-                        <h2 class="text-xl font-semibold mb-2 text-center">Today's Practice</h2>
-                        <p id="practice-date" class="text-center text-indigo-600 font-semibold mb-4"></p>
-                         <div id="rating-buttons" class="grid grid-cols-4 gap-3">
-                            <button data-rating="0" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">0</button>
-                            <button data-rating="1" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">1</button>
-                            <button data-rating="2" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">2</button>
-                            <button data-rating="3" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">3</button>
-                        </div>
-                        <p id="rating-helper" class="text-center text-gray-500 mt-4 h-5">Select a rating to assign a pass.</p>
-                    </div>
-                     <div id="stats-list">
-                         <div id="stats-loading" class="text-center p-4 text-gray-500">Loading players...</div>
-                    </div>
-                     <div id="team-summary-section" class="mt-8"></div>
-                    <div class="mt-8 text-center">
-                        <button id="download-csv-btn" class="bg-green-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
-                            Download All Stats (CSV)
-                        </button>
-                    </div>
+                      <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
+                         <h2 class="text-xl font-semibold mb-2 text-center">Today's Practice</h2>
+                         <p id="practice-date" class="text-center text-indigo-600 font-semibold mb-4"></p>
+                          <div id="rating-buttons" class="grid grid-cols-4 gap-3">
+                             <button data-rating="0" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">0</button>
+                             <button data-rating="1" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">1</button>
+                             <button data-rating="2" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">2</button>
+                             <button data-rating="3" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">3</button>
+                         </div>
+                         <p id="rating-helper" class="text-center text-gray-500 mt-4 h-5">Select a rating to assign a pass.</p>
+                     </div>
+                      <div id="stats-list">
+                          <div id="stats-loading" class="text-center p-4 text-gray-500">Loading players...</div>
+                     </div>
+                      <div id="team-summary-section" class="mt-8"></div>
+                     <div class="mt-8 text-center">
+                         <button id="download-csv-btn" class="bg-green-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
+                             Download All Stats (CSV)
+                         </button>
+                     </div>
                 </div>
 
                 <!-- Log Section -->
@@ -154,13 +153,6 @@
                 <!-- Progress Section -->
                 <div id="progress-section" class="hidden space-y-8">
                      <div id="progress-loading" class="text-center p-4 text-gray-500">Loading progress charts...</div>
-                </div>
-            </div>
-
-             <!-- Hitting Content Section -->
-            <div id="hitting-content-section" class="hidden">
-                <div class="text-center p-10 bg-white rounded-lg shadow-md">
-                    <h2 class="text-xl font-semibold text-gray-500">Hitting stats are coming soon!</h2>
                 </div>
             </div>
         </div>
@@ -247,9 +239,7 @@
         const switchTeamBtn = document.getElementById('switch-team-btn');
         // Main Tabs
         const mainPassingTabBtn = document.getElementById('main-passing-tab-btn');
-        const mainHittingTabBtn = document.getElementById('main-hitting-tab-btn');
         const passingContentSection = document.getElementById('passing-content-section');
-        const hittingContentSection = document.getElementById('hitting-content-section');
         // Sub Tabs
         const rosterTabBtn = document.getElementById('roster-tab-btn');
         const statsTabBtn = document.getElementById('stats-tab-btn');
@@ -339,10 +329,10 @@
             rosterList.innerHTML = players.map(player => `
                 <div class="bg-white p-4 rounded-lg shadow-sm flex justify-between items-center">
                      <div>
-                        <span class="font-medium text-lg player-name-link cursor-pointer hover:underline" data-player-id="${player.id}">${player.name}</span>
-                        <span class="text-xs uppercase font-semibold text-indigo-600 bg-indigo-100 ml-2 px-2 py-1 rounded-full">${player.position || 'N/A'}</span>
-                    </div>
-                    <button data-id="${player.id}" class="delete-player-btn text-red-500 hover:text-red-700 font-semibold transition-colors">Remove</button>
+                         <span class="font-medium text-lg player-name-link cursor-pointer hover:underline" data-player-id="${player.id}">${player.name}</span>
+                         <span class="text-xs uppercase font-semibold text-indigo-600 bg-indigo-100 ml-2 px-2 py-1 rounded-full">${player.position || 'N/A'}</span>
+                     </div>
+                     <button data-id="${player.id}" class="delete-player-btn text-red-500 hover:text-red-700 font-semibold transition-colors">Remove</button>
                 </div>
             `).join('');
         };
@@ -472,7 +462,7 @@
                         const count = passes.length; const sum = passes.reduce((s, c) => s + c, 0); const avg = (sum/count).toFixed(2);
                         return `<div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-medium">${player.name}</span><span class="text-gray-600">Avg: <span class="font-bold text-gray-800">${avg}</span> (${count} passes)</span></div>`;
                     }).join('');
-                    playerHtml += `<h3 class="text-md font-semibold text-indigo-700 mt-4 mb-2">Unassigned</h3><div>${playerRows}</div>`;
+                     playerHtml += `<h3 class="text-md font-semibold text-indigo-700 mt-4 mb-2">Unassigned</h3><div>${playerRows}</div>`;
                 }
                 return `<div class="bg-white rounded-lg shadow-md">
                     <div class="log-toggle p-6 cursor-pointer">
@@ -482,10 +472,10 @@
                                 <p class="text-sm text-gray-500">Team Average: <span class="font-semibold">${teamAverageOnDate}</span> (${teamTotalPassesOnDate} passes)</p>
                             </div>
                              <div class="flex items-center space-x-4">
-                                <button data-date-key="${dateKey}" class="change-date-btn text-sm text-indigo-600 hover:underline font-semibold z-10 relative">Change Date</button>
-                                <svg class="chevron-icon w-6 h-6 text-gray-400 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
+                                 <button data-date-key="${dateKey}" class="change-date-btn text-sm text-indigo-600 hover:underline font-semibold z-10 relative">Change Date</button>
+                                 <svg class="chevron-icon w-6 h-6 text-gray-400 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                 </svg>
                             </div>
                         </div>
                     </div>
@@ -712,15 +702,6 @@
                 tab.btn.classList.add('active');
             });
         });
-
-        const mainTabs = [ { btn: mainPassingTabBtn, section: passingContentSection }, { btn: mainHittingTabBtn, section: hittingContentSection }];
-        mainTabs.forEach(tab => {
-            tab.btn.addEventListener('click', () => {
-                mainTabs.forEach(t => { t.section.classList.add('hidden'); t.btn.classList.remove('active'); });
-                tab.section.classList.remove('hidden');
-                tab.btn.classList.add('active');
-            });
-        });
         
         addPlayerBtn.addEventListener('click', handleAddPlayer);
         playerNameInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') handleAddPlayer(); });
@@ -789,12 +770,12 @@
         // --- App Initialization ---
         async function initApp() {
              try {
-                await signInAnonymously(auth);
-                const savedTeamId = localStorage.getItem('vollystats_teamId');
-                if (savedTeamId) { loadTeam(savedTeamId); }
+                 await signInAnonymously(auth);
+                 const savedTeamId = localStorage.getItem('vollystats_teamId');
+                 if (savedTeamId) { loadTeam(savedTeamId); }
             } catch (error) {
-                console.error("Authentication failed:", error);
-                teamError.textContent = "Could not connect to authentication service.";
+                 console.error("Authentication failed:", error);
+                 teamError.textContent = "Could not connect to authentication service.";
             }
         }
         initApp();
