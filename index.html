@@ -38,11 +38,134 @@
         #team-code-display {
             cursor: pointer;
         }
+        .side-panel {
+            position: fixed;
+            top: 0;
+            left: -340px;
+            width: 340px;
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            transition: left 0.3s ease-in-out;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .side-panel.open {
+            left: 0;
+        }
+        .side-panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0,0,0,0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 999;
+        }
+        .side-panel-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-width: 150px;
+            z-index: 100;
+        }
+        .dropdown-menu.show {
+            display: block;
+        }
+        .split-view-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        .split-view-container.active {
+            grid-template-columns: 1fr 1fr;
+        }
+        .unforced-counter-compact {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
-<div id="app" class="max-w-xl mx-auto p-4 min-h-screen">
+    
+    <!-- Side Panel Overlay -->
+    <div id="side-panel-overlay" class="side-panel-overlay"></div>
+    
+    <!-- Side Panel -->
+    <div id="side-panel" class="side-panel">
+        <div class="p-4 border-b bg-indigo-600 text-white flex justify-between items-center">
+            <h2 class="text-xl font-bold">Menu</h2>
+            <button id="close-side-panel-btn" class="text-2xl hover:bg-indigo-700 rounded px-2">&times;</button>
+        </div>
         
+        <!-- Roster Section in Side Panel -->
+        <div class="p-4 border-b">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">Roster</h3>
+            <div class="mb-4">
+                <input type="text" id="side-player-name-input" placeholder="Player name" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2">
+                <div class="flex gap-2">
+                    <select id="side-player-position-select" class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="Outside">Outside</option>
+                        <option value="Opposite">Opposite</option>
+                        <option value="Middle">Middle</option>
+                        <option value="Setter">Setter</option>
+                        <option value="Libero">Libero</option>
+                    </select>
+                    <button id="side-add-player-btn" class="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-indigo-700 text-sm">Add</button>
+                </div>
+            </div>
+            <div id="side-roster-list" class="space-y-2">
+                <div class="text-center text-gray-500 text-sm py-2">Loading...</div>
+            </div>
+        </div>
+        
+        <!-- Progress Charts Section in Side Panel -->
+        <div class="p-4 border-b">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">Progress Charts</h3>
+            <p class="text-xs text-gray-500 mb-3">Showing all practice + game data</p>
+            <div id="side-progress-charts" class="space-y-4">
+                <div class="text-center text-gray-500 text-sm py-2">No progress data yet</div>
+            </div>
+        </div>
+        
+        <!-- Passing Log in Side Panel -->
+        <div class="p-4 border-b">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">Passing Log</h3>
+            <div id="side-passing-log" class="space-y-2">
+                <div class="text-center text-gray-500 text-sm py-2">No past data</div>
+            </div>
+        </div>
+        
+        <!-- Hitting Log in Side Panel -->
+        <div class="p-4">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">Hitting Log</h3>
+            <div id="side-hitting-log" class="space-y-2">
+                <div class="text-center text-gray-500 text-sm py-2">No past data</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="max-w-6xl mx-auto p-4 min-h-screen">
+        
+        <!-- Team Selection Section -->
         <div id="team-selection-section" class="flex flex-col items-center justify-center min-h-screen">
             <div class="w-full max-w-sm text-center">
                 <h1 class="text-3xl font-bold text-indigo-600 mb-2">Stats</h1>
@@ -67,156 +190,228 @@
                 </div>
             </div>
         </div>
-<div id="main-app-section" class="hidden">
-            <header class="text-center my-6">
-                <h1 class="text-3xl font-bold text-indigo-600">Stats</h1>
-                <p class="text-gray-500 mt-1">Pulse 16's</p>
-                 <div class="mt-4">
-                     <span class="text-sm text-gray-500">Team Code:</span>
-                     <span id="team-code-display" class="font-mono bg-indigo-100 text-indigo-700 text-lg font-bold p-2 rounded-md tracking-widest" title="Click to copy"></span>
-                     <button id="switch-team-btn" class="ml-2 text-sm text-indigo-600 hover:underline">Switch</button>
-                 </div>
+<!-- Main App Section -->
+        <div id="main-app-section" class="hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm rounded-lg p-4 mb-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <!-- Hamburger Menu -->
+                        <button id="hamburger-btn" class="text-2xl text-gray-700 hover:text-indigo-600 transition">
+                            ☰
+                        </button>
+                        
+                        <!-- Mode Dropdown -->
+                        <div class="relative">
+                            <button id="mode-dropdown-btn" class="flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-200 transition">
+                                <span id="current-mode-text">Practice</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div id="mode-dropdown-menu" class="dropdown-menu">
+                                <button data-mode="practice" class="mode-option w-full text-left px-4 py-2 hover:bg-gray-100 font-medium">Practice</button>
+                                <button data-mode="game" class="mode-option w-full text-left px-4 py-2 hover:bg-gray-100 font-medium">Game</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center flex-1">
+                        <h1 class="text-2xl font-bold text-indigo-600">Stats</h1>
+                        <p class="text-gray-500 text-sm">Pulse 16's</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <!-- Unforced Errors Counter (Compact) -->
+                        <div class="unforced-counter-compact">
+                            <span class="font-semibold text-red-600">UE:</span>
+                            <span id="unforced-errors-count-compact" class="font-bold text-red-700 text-lg">0</span>
+                            <button id="unforced-increment-compact" class="bg-red-500 text-white px-2 py-0.5 rounded hover:bg-red-600 text-xs font-bold">+</button>
+                            <button id="unforced-decrement-compact" class="bg-gray-400 text-white px-2 py-0.5 rounded hover:bg-gray-500 text-xs font-bold">-</button>
+                        </div>
+                        
+                        <!-- Team Code -->
+                        <div class="text-right">
+                            <span class="text-xs text-gray-500">Team:</span>
+                            <div>
+                                <span id="team-code-display" class="font-mono bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded tracking-wider text-sm" title="Click to copy"></span>
+                            </div>
+                            <button id="switch-team-btn" class="text-xs text-indigo-600 hover:underline">Switch</button>
+                        </div>
+                    </div>
+                </div>
             </header>
 
-            <div class="flex justify-center border-b border-gray-300 mb-4">
-                <button id="main-practice-tab-btn" class="main-tab-button active">Practice</button>
-		<button id="main-game-tab-btn" class="main-tab-button">Unforced</button>
-            </div>
-<div id="practice-content-section">
-                <div class="flex justify-center border-b border-gray-200 mb-4">
-                    <button id="practice-passing-btn" class="main-tab-button active text-base">Passing</button>
-                    <button id="practice-hitting-btn" class="main-tab-button text-base">Hitting</button>
-                </div>
-
-                <div id="passing-content-section">
-                    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
-                        <button id="roster-tab-btn" class="tab-button flex-shrink-0 py-3 px-4 text-center font-semibold text-gray-600 border-b-2 border-transparent transition duration-200 ease-in-out hover:bg-gray-100 active">Roster</button>
-                        <button id="stats-tab-btn" class="tab-button flex-shrink-0 py-3 px-4 text-center font-semibold text-gray-600 border-b-2 border-transparent transition duration-200 ease-in-out hover:bg-gray-100">Passing Stats</button>
-                        <button id="log-tab-btn" class="tab-button flex-shrink-0 py-3 px-4 text-center font-semibold text-gray-600 border-b-2 border-transparent transition duration-200 ease-in-out hover:bg-gray-100">Log</button>
-                        <button id="progress-tab-btn" class="tab-button flex-shrink-0 py-3 px-4 text-center font-semibold text-gray-600 border-b-2 border-transparent transition duration-200 ease-in-out hover:bg-gray-100">Progress</button>
+            <!-- Practice Mode Content -->
+            <div id="practice-mode-content" class="hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex gap-2">
+                        <button id="practice-passing-btn" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-white border-2 border-gray-300 hover:border-indigo-500 transition">Passing</button>
+                        <button id="practice-hitting-btn" class="px-4 py-2 rounded-lg font-semibold text-gray-700 bg-white border-2 border-gray-300 hover:border-indigo-500 transition">Hitting</button>
                     </div>
-
-                    <div id="roster-section">
-                         <div class="bg-white p-6 rounded-lg shadow-md">
-                             <h2 class="text-xl font-semibold mb-4">Add Player to Roster</h2>
-                             <div class="flex flex-col sm:flex-row gap-3">
-                                 <input type="text" id="player-name-input" placeholder="Enter player's name" class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                 <select id="player-position-select" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
-                                     <option value="Libero">Libero</option>
-                                     <option value="Outside">Outside</option>
-                                     <option value="Middle">Middle</option>
-                                     <option value="Opposite">Opposite</option>
-                                     <option value="Setter">Setter</option>
-                                 </select>
-                                 <button id="add-player-btn" class="w-full sm:w-auto bg-indigo-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 ease-in-out">Add Player</button>
-                             </div>
-                         </div>
-                         <div id="roster-list" class="mt-6 space-y-3">
-                             <div id="roster-loading" class="text-center p-4 text-gray-500">Loading roster...</div>
-                         </div>
-                    </div>
-<div id="stats-section" class="hidden">
-                          <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
-                             <h2 class="text-xl font-semibold mb-2 text-center">Today's Practice</h2>
-                             <p id="practice-date" class="text-center text-indigo-600 font-semibold mb-4"></p>
-                              <div id="rating-buttons" class="grid grid-cols-4 gap-3">
-                                 <button data-rating="0" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">0</button>
-                                 <button data-rating="1" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">1</button>
-                                 <button data-rating="2" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">2</button>
-                                 <button data-rating="3" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">3</button>
-                             </div>
-                             <p id="rating-helper" class="text-center text-gray-500 mt-4 h-5">Select a rating to assign a pass.</p>
-                         </div>
-                          <div id="stats-list">
-                              <div id="stats-loading" class="text-center p-4 text-gray-500">Loading players...</div>
-                         </div>
-                          <div id="team-summary-section" class="mt-8"></div>
-                         <div class="mt-8 text-center">
-                             <button id="download-csv-btn" class="bg-green-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
-                                 Download All Stats (CSV)
-                             </button>
-                         </div>
-                    </div>
-
-                    <div id="log-section" class="hidden space-y-4">
-                        <div id="log-loading" class="text-center p-4 text-gray-500">Loading practice log...</div>
-                    </div>
-
-                    <div id="progress-section" class="hidden space-y-8">
-                         <div id="progress-loading" class="text-center p-4 text-gray-500">Loading progress charts...</div>
-                    </div>
-                </div>
-<div id="hitting-content-section" class="hidden">
-                    <div class="flex border-b border-gray-200 mb-6 overflow-x-auto">
-                        <button id="hitting-roster-tab-btn" class="tab-button flex-shrink-0 py-3 px-4 text-center font-semibold text-gray-600 border-b-2 border-transparent transition duration-200 ease-in-out hover:bg-gray-100 active">Roster</button>
-                        <button id="hitting-stats-tab-btn" class="tab-button flex-shrink-0 py-3 px-4 text-center font-semibold text-gray-600 border-b-2 border-transparent transition duration-200 ease-in-out hover:bg-gray-100">Hitting Stats</button>
-                        <button id="hitting-log-tab-btn" class="tab-button flex-shrink-0 py-3 px-4 text-center font-semibold text-gray-600 border-b-2 border-transparent transition duration-200 ease-in-out hover:bg-gray-100">Log</button>
-                        <button id="hitting-progress-tab-btn" class="tab-button flex-shrink-0 py-3 px-4 text-center font-semibold text-gray-600 border-b-2 border-transparent transition duration-200 ease-in-out hover:bg-gray-100">Progress</button>
-                    </div>
-
-                    <div id="hitting-roster-section">
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <p class="text-gray-600">Using the same roster from Passing section.</p>
-                        </div>
-                        <div id="hitting-roster-list" class="mt-6 space-y-3">
-                            <div id="hitting-roster-loading" class="text-center p-4 text-gray-500">Loading roster...</div>
-                        </div>
-                    </div>
-
-                    <div id="hitting-stats-section" class="hidden">
-                        <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
-                            <h2 class="text-xl font-semibold mb-2 text-center">Today's Practice</h2>
-                            <p id="hitting-practice-date" class="text-center text-indigo-600 font-semibold mb-4"></p>
-                            <div id="hitting-action-buttons" class="grid grid-cols-2 gap-3">
-                                <button data-action="kill" class="hitting-action-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">Kill</button>
-                                <button data-action="error" class="hitting-action-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">Error</button>
-                            </div>
-                            <p id="hitting-action-helper" class="text-center text-gray-500 mt-4 h-5">Select an action to assign.</p>
-                        </div>
-                        <div id="hitting-stats-list">
-                            <div id="hitting-stats-loading" class="text-center p-4 text-gray-500">Loading players...</div>
-                        </div>
-                        <div id="hitting-team-summary-section" class="mt-8"></div>
-                        <div class="mt-8 text-center">
-                            <button id="hitting-download-csv-btn" class="bg-green-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed">
-                                Download All Stats (CSV)
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="hitting-log-section" class="hidden space-y-4">
-                        <div id="hitting-log-loading" class="text-center p-4 text-gray-500">Loading practice log...</div>
-                    </div>
-
-                    <div id="hitting-progress-section" class="hidden space-y-8">
-                         <div id="hitting-progress-loading" class="text-center p-4 text-gray-500">Loading progress charts...</div>
-                    </div>
-                </div>
-            </div>
-<div id="game-content-section" class="hidden">
-                <div class="bg-white p-6 rounded-lg shadow-md text-center">
-                    <h2 class="text-2xl font-bold text-indigo-600 mb-2">Unforced Errors</h2>
-                    <p class="text-gray-500 mb-6">Track team unforced errors during the game</p>
-                    <div class="bg-indigo-50 rounded-lg p-8 mb-6">
-                        <p id="unforced-errors-count" class="text-8xl font-bold text-indigo-600 mb-2">0</p>
-                        <p class="text-gray-500 text-sm">Total Errors</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button id="unforced-errors-increment-btn" class="bg-red-600 text-white font-bold text-2xl py-6 rounded-lg hover:bg-red-700 transition">
-                            +1
-                        </button>
-                        <button id="unforced-errors-decrement-btn" class="bg-gray-400 text-white font-bold text-2xl py-6 rounded-lg hover:bg-gray-500 transition">
-                            -1
-                        </button>
-                    </div>
-                    <button id="unforced-errors-reset-btn" class="mt-4 w-full bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-300 transition">
-                        Reset Counter
+                    <button id="practice-split-view-btn" class="px-4 py-2 rounded-lg font-semibold text-indigo-600 bg-indigo-50 border-2 border-indigo-300 hover:bg-indigo-100 transition">
+                        Split View 🗗
                     </button>
                 </div>
+
+                <div id="practice-split-container" class="split-view-container">
+                    <div id="practice-main-panel">
+                        <!-- Passing Content -->
+                        <div id="practice-passing-content" class="hidden">
+                            <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
+                                <h2 class="text-xl font-semibold mb-2 text-center">Today's Practice - Passing</h2>
+                                <p id="practice-date" class="text-center text-indigo-600 font-semibold mb-4"></p>
+                                <div id="rating-buttons" class="grid grid-cols-4 gap-3">
+                                    <button data-rating="0" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">0</button>
+                                    <button data-rating="1" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">1</button>
+                                    <button data-rating="2" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">2</button>
+                                    <button data-rating="3" class="rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">3</button>
+                                </div>
+                                <p id="rating-helper" class="text-center text-gray-500 mt-4 h-5">Select a rating to assign a pass.</p>
+                            </div>
+                            <div id="practice-passing-stats-list">
+                                <div class="text-center p-4 text-gray-500">Loading players...</div>
+                            </div>
+                            <div id="practice-passing-team-summary" class="mt-8"></div>
+                            <div class="mt-8 text-center">
+                                <button id="practice-passing-download-csv-btn" class="bg-green-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 transition">
+                                    Download All Passing Stats (CSV)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hitting Content -->
+                        <div id="practice-hitting-content" class="hidden">
+                            <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
+                                <h2 class="text-xl font-semibold mb-2 text-center">Today's Practice - Hitting</h2>
+                                <p id="practice-hitting-date" class="text-center text-indigo-600 font-semibold mb-4"></p>
+                                <div id="practice-hitting-action-buttons" class="grid grid-cols-2 gap-3">
+                                    <button data-action="kill" class="hitting-action-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">Kill</button>
+                                    <button data-action="error" class="hitting-action-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">Error</button>
+                                </div>
+                                <p id="practice-hitting-action-helper" class="text-center text-gray-500 mt-4 h-5">Select an action to assign.</p>
+                            </div>
+                            <div id="practice-hitting-stats-list">
+                                <div class="text-center p-4 text-gray-500">Loading players...</div>
+                            </div>
+                            <div id="practice-hitting-team-summary" class="mt-8"></div>
+                            <div class="mt-8 text-center">
+                                <button id="practice-hitting-download-csv-btn" class="bg-green-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 transition">
+                                    Download All Hitting Stats (CSV)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel (Split View) -->
+                    <div id="practice-split-panel" class="hidden">
+                        <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+                            <select id="practice-split-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="passing">Passing</option>
+                                <option value="hitting">Hitting</option>
+                            </select>
+                        </div>
+                        <div id="practice-split-content"></div>
+                    </div>
+                </div>
             </div>
+<!-- Game Mode Content -->
+            <div id="game-mode-content" class="hidden">
+                <div class="flex items-center gap-2 mb-4 overflow-x-auto border-b border-gray-300 pb-2">
+                    <div id="game-tabs-container" class="flex gap-2">
+                        <!-- Dynamic game tabs -->
+                    </div>
+                    <button id="add-game-btn" class="px-4 py-2 rounded-lg font-semibold text-green-600 bg-green-50 border-2 border-green-300 hover:bg-green-100 transition whitespace-nowrap">
+                        + New Game
+                    </button>
+                    <button id="day-summary-btn" class="px-4 py-2 rounded-lg font-semibold text-purple-600 bg-purple-50 border-2 border-purple-300 hover:bg-purple-100 transition whitespace-nowrap">
+                        Day Summary
+                    </button>
+                    <button id="game-split-view-btn" class="ml-auto px-4 py-2 rounded-lg font-semibold text-indigo-600 bg-indigo-50 border-2 border-indigo-300 hover:bg-indigo-100 transition whitespace-nowrap">
+                        Split View 🗗
+                    </button>
+                </div>
+
+                <div id="game-split-container" class="split-view-container">
+                    <div id="game-main-panel">
+                        <div id="game-content-area">
+                            <!-- Dynamic game content -->
+                        </div>
+
+                        <!-- Day Summary Content -->
+                        <div id="day-summary-content" class="hidden">
+                            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+                                <h2 class="text-2xl font-bold text-center text-indigo-600 mb-4">Day Summary</h2>
+                                <p id="day-summary-date" class="text-center text-gray-600 mb-6"></p>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg">
+                                        <h3 class="text-xl font-bold text-indigo-700 mb-4 text-center">Passing</h3>
+                                        <div class="space-y-3">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Total Passes:</span>
+                                                <span id="day-summary-total-passes" class="font-bold text-gray-800">0</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Team Average:</span>
+                                                <span id="day-summary-passing-avg" class="font-bold text-indigo-600 text-xl">0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="bg-gradient-to-br from-red-50 to-orange-50 p-6 rounded-lg">
+                                        <h3 class="text-xl font-bold text-red-700 mb-4 text-center">Hitting</h3>
+                                        <div class="space-y-3">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Total Kills:</span>
+                                                <span id="day-summary-total-kills" class="font-bold text-green-600">0</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Total Errors:</span>
+                                                <span id="day-summary-total-errors" class="font-bold text-red-600">0</span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600">Hit Percentage:</span>
+                                                <span id="day-summary-hitting-pct" class="font-bold text-red-600 text-xl">0.0%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6">
+                                    <h3 class="text-lg font-bold text-gray-700 mb-3">Games Played Today:</h3>
+                                    <div id="day-summary-games-list" class="space-y-2"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <h3 class="text-xl font-bold text-gray-800 mb-4">Player Performance</h3>
+                                <div id="day-summary-player-stats" class="space-y-4"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel (Split View) -->
+                    <div id="game-split-panel" class="hidden">
+                        <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Game</label>
+                            <select id="game-split-game-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3">
+                            </select>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Stat Type</label>
+                            <select id="game-split-type-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="passing">Passing</option>
+                                <option value="hitting">Hitting</option>
+                            </select>
+                        </div>
+                        <div id="game-split-content"></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
-<div id="player-select-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+<!-- Player Select Modal -->
+    <div id="player-select-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-xl max-w-sm w-full">
             <div class="p-4 border-b">
                 <h2 id="modal-title" class="text-xl font-semibold text-center">Assign Rating to Player</h2>
@@ -228,18 +423,68 @@
         </div>
     </div>
 
+    <!-- Date Change Modal -->
     <div id="date-change-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-xl max-w-sm w-full">
             <div class="p-4 border-b">
-                <h2 id="date-change-modal-title" class="text-xl font-semibold text-center">Change Practice Date</h2>
+                <h2 class="text-xl font-semibold text-center">Change Date</h2>
             </div>
             <div class="p-6 space-y-4">
-                <p>Select the correct date for this practice session:</p>
+                <p>Select the correct date for this session:</p>
                 <input type="date" id="date-change-input" class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <div class="p-4 border-t bg-gray-50 flex gap-3">
                 <button id="date-change-cancel-btn" class="w-full bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300">Cancel</button>
                 <button id="date-change-save-btn" class="w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700">Save Date</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Player Position Modal -->
+    <div id="edit-position-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full">
+            <div class="p-4 border-b">
+                <h2 class="text-xl font-semibold text-center">Edit Player</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Player Name</label>
+                    <p id="edit-player-name" class="text-lg font-semibold text-gray-800"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                    <select id="edit-player-position-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="Outside">Outside</option>
+                        <option value="Opposite">Opposite</option>
+                        <option value="Middle">Middle</option>
+                        <option value="Setter">Setter</option>
+                        <option value="Libero">Libero</option>
+                    </select>
+                </div>
+            </div>
+            <div class="p-4 border-t bg-gray-50 flex gap-3">
+                <button id="edit-position-cancel-btn" class="flex-1 bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300">Cancel</button>
+                <button id="edit-position-delete-btn" class="flex-1 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700">Delete</button>
+                <button id="edit-position-save-btn" class="flex-1 bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Game Modal -->
+    <div id="new-game-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-sm w-full">
+            <div class="p-4 border-b">
+                <h2 class="text-xl font-semibold text-center">Create New Game</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Game Name</label>
+                    <input type="text" id="new-game-name-input" placeholder="e.g., Game 1, vs Tigers" class="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div class="p-4 border-t bg-gray-50 flex gap-3">
+                <button id="new-game-cancel-btn" class="flex-1 bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300">Cancel</button>
+                <button id="new-game-create-btn" class="flex-1 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700">Create</button>
             </div>
         </div>
     </div>
@@ -249,7 +494,6 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, getDoc, updateDoc, setLogLevel, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration & Initialization
         const firebaseConfig = {
             apiKey: "AIzaSyD-vfd0a-D8cUbJwPJUDb--HC_AVZ8oXts",
             authDomain: "vollystats.firebaseapp.com",
@@ -265,24 +509,53 @@
         setLogLevel('debug');
 
         // App State
+        let currentMode = 'practice';
+        let currentPracticeTab = 'passing';
+        let practiceSplitView = false;
+        let practiceSplitTab = 'hitting';
+        let gameSplitView = false;
+        let gameSplitGameId = null;
+        let gameSplitType = 'passing';
         let selectedRating = null;
         let selectedHittingAction = null;
-        let currentMode = 'passing';
+        let currentStatType = 'passing';
         let playersCache = [];
         let currentTeamId = null;
         let rosterCollectionRef = null;
+        let gamesCollectionRef = null;
         let playerCharts = {};
         let editingDateKey = null;
+        let editingPlayerId = null;
+        let gamesData = [];
+        let currentGameId = null;
+        let currentGameStatType = 'passing';
+        let unforcedErrorsCount = 0;
 
-        // Date Management
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         const todayKey = `${year}-${month}-${day}`;
-        
         const practiceDateDisplay = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-// UI Element References
+
+        // Position Groups - Different order for Passing vs Hitting
+        const passingPositionGroups = [
+            { title: 'Liberos', positions: ['Libero'] },
+            { title: 'Outsides', positions: ['Outside'] },
+            { title: 'Opposites', positions: ['Opposite'] },
+            { title: 'Middles', positions: ['Middle'] },
+            { title: 'Setters', positions: ['Setter'] }
+        ];
+
+        const hittingPositionGroups = [
+            { title: 'Outsides', positions: ['Outside'] },
+            { title: 'Opposites', positions: ['Opposite'] },
+            { title: 'Middles', positions: ['Middle'] },
+            { title: 'Setters', positions: ['Setter'] },
+            { title: 'Liberos', positions: ['Libero'] }
+        ];
+
+        // UI Element References
         const teamSelectionSection = document.getElementById('team-selection-section');
         const mainAppSection = document.getElementById('main-app-section');
         const joinTeamCodeInput = document.getElementById('join-team-code-input');
@@ -292,70 +565,108 @@
         const teamError = document.getElementById('team-error');
         const teamCodeDisplay = document.getElementById('team-code-display');
         const switchTeamBtn = document.getElementById('switch-team-btn');
-        const mainPracticeTabBtn = document.getElementById('main-practice-tab-btn');
-        const mainGameTabBtn = document.getElementById('main-game-tab-btn');
-        const practiceContentSection = document.getElementById('practice-content-section');
-        const gameContentSection = document.getElementById('game-content-section');
+
+        const sidePanel = document.getElementById('side-panel');
+        const sidePanelOverlay = document.getElementById('side-panel-overlay');
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const closeSidePanelBtn = document.getElementById('close-side-panel-btn');
+        const sidePlayerNameInput = document.getElementById('side-player-name-input');
+        const sidePlayerPositionSelect = document.getElementById('side-player-position-select');
+        const sideAddPlayerBtn = document.getElementById('side-add-player-btn');
+        const sideRosterList = document.getElementById('side-roster-list');
+        const sideProgressCharts = document.getElementById('side-progress-charts');
+        const sidePassingLog = document.getElementById('side-passing-log');
+        const sideHittingLog = document.getElementById('side-hitting-log');
+
+        const modeDropdownBtn = document.getElementById('mode-dropdown-btn');
+        const modeDropdownMenu = document.getElementById('mode-dropdown-menu');
+        const currentModeText = document.getElementById('current-mode-text');
+
+        const unforcedErrorsCountCompact = document.getElementById('unforced-errors-count-compact');
+        const unforcedIncrementCompact = document.getElementById('unforced-increment-compact');
+        const unforcedDecrementCompact = document.getElementById('unforced-decrement-compact');
+
+        const practiceModeContent = document.getElementById('practice-mode-content');
         const practicePassingBtn = document.getElementById('practice-passing-btn');
         const practiceHittingBtn = document.getElementById('practice-hitting-btn');
-        const passingContentSection = document.getElementById('passing-content-section');
-        const hittingContentSection = document.getElementById('hitting-content-section');
-        const rosterTabBtn = document.getElementById('roster-tab-btn');
-        const statsTabBtn = document.getElementById('stats-tab-btn');
-        const logTabBtn = document.getElementById('log-tab-btn');
-        const progressTabBtn = document.getElementById('progress-tab-btn');
-        const rosterSection = document.getElementById('roster-section');
-        const statsSection = document.getElementById('stats-section');
-        const logSection = document.getElementById('log-section');
-        const progressSection = document.getElementById('progress-section');
-        const hittingRosterTabBtn = document.getElementById('hitting-roster-tab-btn');
-        const hittingStatsTabBtn = document.getElementById('hitting-stats-tab-btn');
-        const hittingLogTabBtn = document.getElementById('hitting-log-tab-btn');
-        const hittingProgressTabBtn = document.getElementById('hitting-progress-tab-btn');
-        const hittingRosterSection = document.getElementById('hitting-roster-section');
-        const hittingStatsSection = document.getElementById('hitting-stats-section');
-        const hittingLogSection = document.getElementById('hitting-log-section');
-        const hittingProgressSection = document.getElementById('hitting-progress-section');
-        const playerNameInput = document.getElementById('player-name-input');
-        const addPlayerBtn = document.getElementById('add-player-btn');
-        const rosterList = document.getElementById('roster-list');
-        const statsList = document.getElementById('stats-list');
-        const teamSummarySection = document.getElementById('team-summary-section');
+        const practiceSplitViewBtn = document.getElementById('practice-split-view-btn');
+        const practiceSplitContainer = document.getElementById('practice-split-container');
+        const practiceMainPanel = document.getElementById('practice-main-panel');
+        const practiceSplitPanel = document.getElementById('practice-split-panel');
+        const practiceSplitSelect = document.getElementById('practice-split-select');
+        const practiceSplitContent = document.getElementById('practice-split-content');
+        
+        const practicePassingContent = document.getElementById('practice-passing-content');
+        const practiceHittingContent = document.getElementById('practice-hitting-content');
+        
+        const practiceDateEl = document.getElementById('practice-date');
+        const practiceHittingDateEl = document.getElementById('practice-hitting-date');
         const ratingButtonsContainer = document.getElementById('rating-buttons');
         const ratingHelper = document.getElementById('rating-helper');
-        const practiceDateEl = document.getElementById('practice-date');
-        const downloadCsvBtn = document.getElementById('download-csv-btn');
-        const hittingRosterList = document.getElementById('hitting-roster-list');
-        const hittingStatsList = document.getElementById('hitting-stats-list');
-        const hittingTeamSummarySection = document.getElementById('hitting-team-summary-section');
-        const hittingActionButtonsContainer = document.getElementById('hitting-action-buttons');
-        const hittingActionHelper = document.getElementById('hitting-action-helper');
-        const hittingPracticeDateEl = document.getElementById('hitting-practice-date');
-        const hittingDownloadCsvBtn = document.getElementById('hitting-download-csv-btn');
-        const unforcedErrorsCountEl = document.getElementById('unforced-errors-count');
-        const unforcedErrorsIncrementBtn = document.getElementById('unforced-errors-increment-btn');
-        const unforcedErrorsDecrementBtn = document.getElementById('unforced-errors-decrement-btn');
-        const unforcedErrorsResetBtn = document.getElementById('unforced-errors-reset-btn');
+        const practiceHittingActionButtonsContainer = document.getElementById('practice-hitting-action-buttons');
+        const practiceHittingActionHelper = document.getElementById('practice-hitting-action-helper');
+        
+        const practicePassingStatsList = document.getElementById('practice-passing-stats-list');
+        const practicePassingTeamSummary = document.getElementById('practice-passing-team-summary');
+        const practicePassingDownloadCsvBtn = document.getElementById('practice-passing-download-csv-btn');
+        
+        const practiceHittingStatsList = document.getElementById('practice-hitting-stats-list');
+        const practiceHittingTeamSummary = document.getElementById('practice-hitting-team-summary');
+        const practiceHittingDownloadCsvBtn = document.getElementById('practice-hitting-download-csv-btn');
+
+        const gameModeContent = document.getElementById('game-mode-content');
+        const gameTabsContainer = document.getElementById('game-tabs-container');
+        const addGameBtn = document.getElementById('add-game-btn');
+        const daySummaryBtn = document.getElementById('day-summary-btn');
+        const gameSplitViewBtn = document.getElementById('game-split-view-btn');
+        const gameSplitContainer = document.getElementById('game-split-container');
+        const gameMainPanel = document.getElementById('game-main-panel');
+        const gameSplitPanel = document.getElementById('game-split-panel');
+        const gameSplitGameSelect = document.getElementById('game-split-game-select');
+        const gameSplitTypeSelect = document.getElementById('game-split-type-select');
+        const gameSplitContent = document.getElementById('game-split-content');
+        const gameContentArea = document.getElementById('game-content-area');
+        const daySummaryContent = document.getElementById('day-summary-content');
+        const daySummaryDate = document.getElementById('day-summary-date');
+
         const playerSelectModal = document.getElementById('player-select-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalPlayerList = document.getElementById('modal-player-list');
         const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        
         const dateChangeModal = document.getElementById('date-change-modal');
         const dateChangeInput = document.getElementById('date-change-input');
         const dateChangeCancelBtn = document.getElementById('date-change-cancel-btn');
         const dateChangeSaveBtn = document.getElementById('date-change-save-btn');
         
+        const editPositionModal = document.getElementById('edit-position-modal');
+        const editPlayerName = document.getElementById('edit-player-name');
+        const editPlayerPositionSelect = document.getElementById('edit-player-position-select');
+        const editPositionCancelBtn = document.getElementById('edit-position-cancel-btn');
+        const editPositionDeleteBtn = document.getElementById('edit-position-delete-btn');
+        const editPositionSaveBtn = document.getElementById('edit-position-save-btn');
+        
+        const newGameModal = document.getElementById('new-game-modal');
+        const newGameNameInput = document.getElementById('new-game-name-input');
+        const newGameCancelBtn = document.getElementById('new-game-cancel-btn');
+        const newGameCreateBtn = document.getElementById('new-game-create-btn');
+
         practiceDateEl.textContent = `(${practiceDateDisplay})`;
-        hittingPracticeDateEl.textContent = `(${practiceDateDisplay})`;
+        practiceHittingDateEl.textContent = `(${practiceDateDisplay})`;
+        daySummaryDate.textContent = practiceDateDisplay;
 // Team Management
         const loadTeam = (teamId) => {
             currentTeamId = teamId.toUpperCase();
             rosterCollectionRef = collection(db, "teams", currentTeamId, "roster");
+            gamesCollectionRef = collection(db, "teams", currentTeamId, "games");
             localStorage.setItem('vollystats_teamId', currentTeamId);
             teamCodeDisplay.textContent = currentTeamId;
             teamSelectionSection.classList.add('hidden');
             mainAppSection.classList.remove('hidden');
+            
+            switchToMode('practice');
             listenForRosterChanges();
+            listenForGamesChanges();
         };
 
         const handleJoinTeam = async () => {
@@ -388,507 +699,310 @@
             localStorage.removeItem('vollystats_teamId');
             currentTeamId = null;
             rosterCollectionRef = null;
+            gamesCollectionRef = null;
             playersCache = [];
+            gamesData = [];
             joinTeamCodeInput.value = '';
             createTeamCodeInput.value = '';
             mainAppSection.classList.add('hidden');
             teamSelectionSection.classList.remove('hidden');
         };
-// Firestore Logic
+
+        const switchToMode = (mode) => {
+            currentMode = mode;
+            currentModeText.textContent = mode === 'practice' ? 'Practice' : 'Game';
+            
+            if (mode === 'practice') {
+                practiceModeContent.classList.remove('hidden');
+                gameModeContent.classList.add('hidden');
+                switchPracticeTab(currentPracticeTab);
+            } else {
+                practiceModeContent.classList.add('hidden');
+                gameModeContent.classList.remove('hidden');
+                renderGameTabs();
+                if (currentGameId) {
+                    switchToGame(currentGameId);
+                }
+            }
+        };
+
+        const openSidePanel = () => {
+            sidePanel.classList.add('open');
+            sidePanelOverlay.classList.add('show');
+        };
+
+        const closeSidePanel = () => {
+            sidePanel.classList.remove('open');
+            sidePanelOverlay.classList.remove('show');
+        };
+
         const listenForRosterChanges = () => {
             if (!rosterCollectionRef) return;
             onSnapshot(rosterCollectionRef, (snapshot) => {
                 playersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderRosterList(playersCache.sort((a,b) => a.name.localeCompare(b.name)));
-                renderStatsList(playersCache);
-                renderLog(playersCache);
-                renderProgress(playersCache);
-                renderHittingRosterList(playersCache.sort((a,b) => a.name.localeCompare(b.name)));
-                renderHittingStatsList(playersCache);
-                renderHittingLog(playersCache);
-                renderHittingProgress(playersCache);
+                renderSideRoster();
+                renderPracticePassingStats();
+                renderPracticeHittingStats();
+                renderSideProgressCharts();
+                renderSidePassingLog();
+                renderSideHittingLog();
+                
+                if (currentMode === 'game' && currentGameId) {
+                    renderGameContent(currentGameId);
+                }
+                
+                if (practiceSplitView) updatePracticeSplitView();
+                if (gameSplitView) updateGameSplitView();
             }, (error) => {
                 console.error("Error listening to roster changes: ", error);
-                let errorMessage = "Error fetching roster.";
-                if (error.code === 'permission-denied') { errorMessage = "Database permissions error. Please update your Firestore security rules."; }
-                rosterList.innerHTML = `<div class="text-center p-4 text-red-500">${errorMessage}</div>`;
-                statsList.innerHTML = `<div class="text-center p-4 text-red-500">${errorMessage}</div>`;
-                logSection.innerHTML = `<div class="text-center p-4 text-red-500">${errorMessage}</div>`;
-                progressSection.innerHTML = `<div class="text-center p-4 text-red-500">${errorMessage}</div>`;
-                hittingRosterList.innerHTML = `<div class="text-center p-4 text-red-500">${errorMessage}</div>`;
-                hittingStatsList.innerHTML = `<div class="text-center p-4 text-red-500">${errorMessage}</div>`;
-                hittingLogSection.innerHTML = `<div class="text-center p-4 text-red-500">${errorMessage}</div>`;
-                hittingProgressSection.innerHTML = `<div class="text-center p-4 text-red-500">${errorMessage}</div>`;
             });
         };
-// UI Rendering - Passing
-        const renderRosterList = (players) => {
-            document.getElementById('roster-loading')?.remove();
-            if (players.length === 0) {
-                rosterList.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Your roster is empty. Add a player to get started!</div>`;
-                return;
-            }
-            rosterList.innerHTML = players.map(player => `
-                <div class="bg-white p-4 rounded-lg shadow-sm flex justify-between items-center">
-                     <div>
-                         <span class="font-medium text-lg player-name-link cursor-pointer hover:underline" data-player-id="${player.id}">${player.name}</span>
-                         <span class="text-xs uppercase font-semibold text-indigo-600 bg-indigo-100 ml-2 px-2 py-1 rounded-full">${player.position || 'N/A'}</span>
-                     </div>
-                     <button data-id="${player.id}" class="delete-player-btn text-red-500 hover:text-red-700 font-semibold transition-colors">Remove</button>
-                </div>
-            `).join('');
-        };
 
-        const renderStatsList = (players) => {
-            document.getElementById('stats-loading')?.remove();
-            if (players.length === 0) {
-                statsList.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Add players to the roster to start tracking stats.</div>`;
-                downloadCsvBtn.disabled = true;
-                teamSummarySection.innerHTML = '';
-                return;
-            }
-            downloadCsvBtn.disabled = false;
-
-            const getPlayerDailyAverage = (player) => {
-                const statsByDate = player.statsByDate || {};
-                const todayPasses = statsByDate[todayKey] || [];
-                const passCount = todayPasses.length;
-                if (passCount === 0) return -1;
-                const passSum = todayPasses.reduce((sum, current) => sum + current, 0);
-                return passSum / passCount;
-            };
-
-            const playerCardHtml = (player, rank) => {
-                const average = getPlayerDailyAverage(player);
-                const statsByDate = player.statsByDate || {};
-                const todayPasses = statsByDate[todayKey] || [];
-                const passCount = todayPasses.length;
+        const listenForGamesChanges = () => {
+            if (!gamesCollectionRef) return;
+            onSnapshot(gamesCollectionRef, (snapshot) => {
+                gamesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(game => game.date === todayKey)
+                    .sort((a, b) => a.createdAt - b.createdAt);
                 
-                const rankHtml = rank
-                    ? `<span class="text-2xl font-bold text-gray-400 w-8 text-center">${rank}.</span>`
-                    : `<span class="text-2xl font-bold text-gray-300 w-8 text-center">-</span>`;
-                
-                const averageDisplay = average >= 0 ? average.toFixed(2) : '0.00';
-                const mainTextColor = rank ? 'text-indigo-700' : 'text-gray-500';
-                const opacityClass = rank ? '' : 'opacity-60';
-
-                return `
-                <div class="bg-white p-4 rounded-lg shadow-sm ${opacityClass}">
-                    <div class="flex items-center space-x-4">
-                        ${rankHtml}
-                        <div>
-                            <h3 class="font-bold text-lg ${mainTextColor} player-name-link cursor-pointer hover:underline" data-player-id="${player.id}">${player.name}</h3>
-                            <p class="text-sm text-gray-500">Today's Avg: <span class="font-semibold text-xl text-gray-800">${averageDisplay}</span></p>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500 pl-12">Today's Passes (${passCount} total):</p>
-                        <p class="text-gray-700 break-words pl-12">${passCount > 0 ? todayPasses.join(', ') : 'No passes recorded for today.'}</p>
-                    </div>
-                </div>`;
-            };
-
-const groups = [ { title: 'Outsides', positions: ['Outside'] }, { title: 'Opposites', positions: ['Opposite'] }, { title: 'Middles', positions: ['Middle'] }, { title: 'Setters', positions: ['Setter'] }];
-            
-            let finalHtml = groups.map(group => {
-                const playersInGroup = players
-                    .filter(p => p.position && group.positions.includes(p.position))
-                    .map(p => ({ ...p, dailyAverage: getPlayerDailyAverage(p) }))
-                    .sort((a, b) => b.dailyAverage - a.dailyAverage);
-
-                if (playersInGroup.length === 0) return '';
-
-                let rankCounter = 1;
-                const groupHtml = playersInGroup.map((player) => {
-                    const rank = player.dailyAverage >= 0 ? rankCounter++ : null;
-                    return playerCardHtml(player, rank);
-                }).join('');
-
-                return `<div class="mb-6"><h2 class="text-xl font-semibold text-gray-700 pb-2 mb-3 border-b-2 border-indigo-200">${group.title}</h2><div class="space-y-3">${groupHtml}</div></div>`;
-            }).join('');
-
-            const unassignedPlayers = players.filter(p => !p.position).sort((a,b)=>a.name.localeCompare(b.name));
-            if (unassignedPlayers.length > 0) {
-                 const unassignedHtml = unassignedPlayers.map(player => playerCardHtml(player, null)).join('');
-                 finalHtml += `<div class="mb-6"><h2 class="text-xl font-semibold text-gray-700 pb-2 mb-3 border-b-2 border-gray-200">Unassigned</h2><div class="space-y-3">${unassignedHtml}</div></div>`;
-            }
-
-            statsList.innerHTML = finalHtml || `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">No players found.</div>`;
-            
-            let totalPasses = 0;
-            let totalSum = 0;
-            players.forEach(player => {
-                const todayPasses = (player.statsByDate || {})[todayKey] || [];
-                totalPasses += todayPasses.length;
-                totalSum += todayPasses.reduce((sum, current) => sum + current, 0);
-            });
-            const teamAverage = totalPasses > 0 ? (totalSum / totalPasses).toFixed(2) : '0.00';
-            teamSummarySection.innerHTML = `<div class="bg-indigo-600 text-white p-6 rounded-lg shadow-lg"><h2 class="text-2xl font-bold text-center mb-4">Today's Team Summary</h2><div class="flex justify-around text-center"><div><p class="text-lg font-semibold text-indigo-200">Total Passes</p><p class="text-4xl font-bold">${totalPasses}</p></div><div><p class="text-lg font-semibold text-indigo-200">Team Average</p><p class="text-4xl font-bold">${teamAverage}</p></div></div></div>`;
-        };
-const renderLog = (players) => {
-            document.getElementById('log-loading')?.remove();
-            const allDates = new Set();
-            players.forEach(player => { if (player.statsByDate) { Object.keys(player.statsByDate).forEach(dateKey => { if (dateKey !== todayKey) { allDates.add(dateKey); } }); } });
-            const sortedDates = Array.from(allDates).sort().reverse();
-            if (sortedDates.length === 0) { logSection.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">No past practice data found.</div>`; return; }
-const groups = [ { title: 'Outsides', positions: ['Outside'] }, { title: 'Opposites', positions: ['Opposite'] }, { title: 'Middles', positions: ['Middle'] }, { title: 'Setters', positions: ['Setter'] }];
-            logSection.innerHTML = sortedDates.map(dateKey => {
-                const displayDate = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                const playersWithStatsOnDate = players.filter(p => p.statsByDate && p.statsByDate[dateKey] && p.statsByDate[dateKey].length > 0);
-                if (playersWithStatsOnDate.length === 0) return '';
-
-                let teamTotalPassesOnDate = 0;
-                let teamTotalSumOnDate = 0;
-                players.forEach(p => {
-                    const passes = (p.statsByDate || {})[dateKey] || [];
-                    teamTotalPassesOnDate += passes.length;
-                    teamTotalSumOnDate += passes.reduce((s, c) => s + c, 0);
-                });
-                const teamAverageOnDate = teamTotalPassesOnDate > 0 ? (teamTotalSumOnDate / teamTotalPassesOnDate).toFixed(2) : '0.00';
-
-                let playerHtml = groups.map(group => {
-                    const playersInGroup = playersWithStatsOnDate.filter(p => p.position && group.positions.includes(p.position)).sort((a, b) => a.name.localeCompare(b.name));
-                    if (playersInGroup.length === 0) return '';
-                    const playerRows = playersInGroup.map(player => {
-                        const passes = player.statsByDate[dateKey] || [];
-                        const count = passes.length; const sum = passes.reduce((s, c) => s + c, 0); const avg = (sum/count).toFixed(2);
-                        return `<div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-medium">${player.name}</span><span class="text-gray-600">Avg: <span class="font-bold text-gray-800">${avg}</span> (${count} passes)</span></div>`;
-                    }).join('');
-                    return `<h3 class="text-md font-semibold text-indigo-700 mt-4 mb-2">${group.title}</h3><div>${playerRows}</div>`;
-                }).join('');
-                const unassignedPlayers = playersWithStatsOnDate.filter(p => !p.position).sort((a,b) => a.name.localeCompare(b.name));
-                if (unassignedPlayers.length > 0) {
-                     const playerRows = unassignedPlayers.map(player => {
-                        const passes = player.statsByDate[dateKey] || [];
-                        const count = passes.length; const sum = passes.reduce((s, c) => s + c, 0); const avg = (sum/count).toFixed(2);
-                        return `<div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-medium">${player.name}</span><span class="text-gray-600">Avg: <span class="font-bold text-gray-800">${avg}</span> (${count} passes)</span></div>`;
-                    }).join('');
-                     playerHtml += `<h3 class="text-md font-semibold text-indigo-700 mt-4 mb-2">Unassigned</h3><div>${playerRows}</div>`;
+                if (currentMode === 'game') {
+                    renderGameTabs();
+                    updateGameSplitGameSelect();
+                    if (currentGameId) {
+                        renderGameContent(currentGameId);
+                    }
+                    renderDaySummary();
                 }
-                return `<div class="bg-white rounded-lg shadow-md">
-                    <div class="log-toggle p-6 cursor-pointer">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h2 class="text-xl font-bold text-gray-800">${displayDate}</h2>
-                                <p class="text-sm text-gray-500">Team Average: <span class="font-semibold">${teamAverageOnDate}</span> (${teamTotalPassesOnDate} passes)</p>
-                            </div>
-                             <div class="flex items-center space-x-4">
-                                 <button data-date-key="${dateKey}" class="change-date-btn text-sm text-indigo-600 hover:underline font-semibold z-10 relative">Change Date</button>
-                                 <svg class="chevron-icon w-6 h-6 text-gray-400 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                 </svg>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="log-details hidden px-6 pb-6">
-                        <div class="border-t pt-4">
-                            ${playerHtml}
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
+            }, (error) => {
+                console.error("Error listening to games changes: ", error);
+            });
         };
 
-        const renderProgress = (players) => {
-            document.getElementById('progress-loading')?.remove();
-            if (players.length === 0) {
-                progressSection.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Add players to the roster to see progress charts.</div>`;
-                return;
+        // Player CRUD Operations
+        const handleAddPlayer = async () => {
+            const name = sidePlayerNameInput.value.trim();
+            const position = sidePlayerPositionSelect.value;
+            if (name && position && rosterCollectionRef) {
+                try { 
+                    await addDoc(rosterCollectionRef, { 
+                        name: name, 
+                        position: position, 
+                        statsByDate: {}, 
+                        hittingByDate: {},
+                        lastStats: []
+                    }); 
+                    sidePlayerNameInput.value = ''; 
+                } 
+                catch (error) { console.error("Error adding player: ", error); }
             }
-            progressSection.innerHTML = '';
-            players.sort((a, b) => a.name.localeCompare(b.name)).forEach(player => {
-                const statsByDate = player.statsByDate || {};
-                const practiceDates = Object.keys(statsByDate).sort();
-                
-                const chartContainer = document.createElement('div');
-                chartContainer.className = 'bg-white p-6 rounded-lg shadow-md';
-                chartContainer.id = `chart-container-${player.id}`;
-                progressSection.appendChild(chartContainer);
+        };
 
-                if (practiceDates.length < 2) {
-                     chartContainer.innerHTML = `<h3 class="font-bold text-lg text-indigo-700">${player.name}</h3><p class="text-gray-500 text-sm mt-2">Not enough data to show progress. At least two practices are needed.</p>`;
+        const handleDeletePlayer = async (playerId) => {
+            if (!currentTeamId) return;
+            if (!confirm('Are you sure you want to delete this player?')) return;
+            try { await deleteDoc(doc(db, "teams", currentTeamId, "roster", playerId)); } 
+            catch (error) { console.error("Error deleting player: ", error); }
+        };
+
+        const handleEditPlayerPosition = (playerId) => {
+            const player = playersCache.find(p => p.id === playerId);
+            if (!player) return;
+            
+            editingPlayerId = playerId;
+            editPlayerName.textContent = player.name;
+            editPlayerPositionSelect.value = player.position || 'Outside';
+            editPositionModal.classList.remove('hidden');
+        };
+
+        const handleSavePlayerPosition = async () => {
+            if (!editingPlayerId || !currentTeamId) return;
+            const newPosition = editPlayerPositionSelect.value;
+            
+            try {
+                const playerDocRef = doc(db, "teams", currentTeamId, "roster", editingPlayerId);
+                await updateDoc(playerDocRef, { position: newPosition });
+                editPositionModal.classList.add('hidden');
+                editingPlayerId = null;
+            } catch (error) {
+                console.error("Error updating player position: ", error);
+            }
+        };
+
+        // Undo Last Stat Feature
+        const undoLastStat = async (playerId) => {
+            if (!currentTeamId) return;
+            
+            try {
+                const playerDocRef = doc(db, "teams", currentTeamId, "roster", playerId);
+                const playerDocSnap = await getDoc(playerDocRef);
+                
+                if (!playerDocSnap.exists()) return;
+                
+                const playerData = playerDocSnap.data();
+                const lastStats = playerData.lastStats || [];
+                
+                if (lastStats.length === 0) {
+                    alert('No recent stats to undo for this player.');
                     return;
                 }
-                const chartData = { labels: [], averages: [] };
-                practiceDates.forEach(dateKey => {
-                    const passes = statsByDate[dateKey] || [];
-                    if (passes.length > 0) {
-                        const sum = passes.reduce((s, c) => s + c, 0);
-                        const avg = sum / passes.length;
-                        chartData.labels.push(new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                        chartData.averages.push(avg);
+                
+                const lastStat = lastStats[lastStats.length - 1];
+                const dateKey = lastStat.date;
+                
+                if (lastStat.type === 'passing') {
+                    const statsByDate = playerData.statsByDate || {};
+                    const datePasses = statsByDate[dateKey] || [];
+                    if (datePasses.length > 0) {
+                        datePasses.pop();
+                        statsByDate[dateKey] = datePasses;
+                        const newLastStats = lastStats.slice(0, -1);
+                        await updateDoc(playerDocRef, { statsByDate, lastStats: newLastStats });
                     }
-                });
-
-                chartContainer.innerHTML = `<h3 class="font-bold text-lg text-indigo-700 mb-4">${player.name}'s Progress</h3>`;
-                const canvas = document.createElement('canvas');
-                chartContainer.appendChild(canvas);
-
-                if (playerCharts[player.id]) { playerCharts[player.id].destroy(); }
-                playerCharts[player.id] = new Chart(canvas.getContext('2d'), {
-                    type: 'line',
-                    data: { labels: chartData.labels, datasets: [{ label: 'Passing Average', data: chartData.averages, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', fill: true, tension: 0.1 }] },
-                    options: { scales: { y: { beginAtZero: true, max: 3 } }, responsive: true, maintainAspectRatio: true }
-                });
-            });
-        };
-// Hitting Render Functions
-
-        const renderHittingRosterList = (players) => {
-            document.getElementById('hitting-roster-loading')?.remove();
-            if (players.length === 0) {
-                hittingRosterList.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Your roster is empty. Add a player in the Passing section.</div>`;
-                return;
-            }
-            
-            const groups = [ { title: 'Outsides', positions: ['Outside'] }, { title: 'Opposites', positions: ['Opposite'] }, { title: 'Middles', positions: ['Middle'] }, { title: 'Setters', positions: ['Setter'] }];
-            
-            let html = groups.map(group => {
-                const playersInGroup = players.filter(p => p.position && group.positions.includes(p.position)).sort((a, b) => a.name.localeCompare(b.name));
-                if (playersInGroup.length === 0) return '';
-                
-                const playerCards = playersInGroup.map(player => `
-                    <div class="bg-white p-4 rounded-lg shadow-sm flex justify-between items-center">
-                         <div>
-                             <span class="font-medium text-lg hitting-player-name-link cursor-pointer hover:underline" data-player-id="${player.id}">${player.name}</span>
-                             <span class="text-xs uppercase font-semibold text-indigo-600 bg-indigo-100 ml-2 px-2 py-1 rounded-full">${player.position || 'N/A'}</span>
-                         </div>
-                    </div>
-                `).join('');
-                
-                return `<div class="mb-4"><h3 class="text-md font-semibold text-gray-600 mb-2">${group.title}</h3>${playerCards}</div>`;
-            }).join('');
-            
-            const unassignedPlayers = players.filter(p => !p.position || !['Outside', 'Opposite', 'Middle', 'Setter'].includes(p.position)).sort((a, b) => a.name.localeCompare(b.name));
-            if (unassignedPlayers.length > 0) {
-                html += `<div class="mb-4"><h3 class="text-md font-semibold text-gray-600 mb-2">Other Positions</h3>${unassignedPlayers.map(player => `
-                    <div class="bg-white p-4 rounded-lg shadow-sm flex justify-between items-center">
-                         <div>
-                             <span class="font-medium text-lg hitting-player-name-link cursor-pointer hover:underline" data-player-id="${player.id}">${player.name}</span>
-                             <span class="text-xs uppercase font-semibold text-indigo-600 bg-indigo-100 ml-2 px-2 py-1 rounded-full">${player.position || 'N/A'}</span>
-                         </div>
-                    </div>
-                `).join('')}</div>`;
-            }
-            
-           hittingRosterList.innerHTML = html;
-        };
-
-        const renderHittingStatsList = (players) => {
-            document.getElementById('hitting-stats-loading')?.remove();
-            if (players.length === 0) {
-                hittingStatsList.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Add players to the roster to start tracking hitting stats.</div>`;
-                hittingDownloadCsvBtn.disabled = true;
-                hittingTeamSummarySection.innerHTML = '';
-                return;
-            }
-            hittingDownloadCsvBtn.disabled = false;
-
-            const getPlayerHittingStats = (player) => {
-                const hittingByDate = player.hittingByDate || {};
-                const todayHits = hittingByDate[todayKey] || { kills: 0, errors: 0 };
-                const total = todayHits.kills + todayHits.errors;
-                const percentage = total > 0 ? ((todayHits.kills / total) * 100).toFixed(1) : 0;
-                return { kills: todayHits.kills, errors: todayHits.errors, total, percentage: parseFloat(percentage) };
-            };
-
-            const playerCardHtml = (player, rank) => {
-                const stats = getPlayerHittingStats(player);
-                
-                const rankHtml = rank
-                    ? `<span class="text-2xl font-bold text-gray-400 w-8 text-center">${rank}.</span>`
-                    : `<span class="text-2xl font-bold text-gray-300 w-8 text-center">-</span>`;
-                
-                const mainTextColor = rank ? 'text-indigo-700' : 'text-gray-500';
-                const opacityClass = rank ? '' : 'opacity-60';
-
-                return `
-                <div class="bg-white p-4 rounded-lg shadow-sm ${opacityClass}">
-                    <div class="flex items-center space-x-4">
-                        ${rankHtml}
-                        <div>
-                            <h3 class="font-bold text-lg ${mainTextColor} hitting-player-name-link cursor-pointer hover:underline" data-player-id="${player.id}">${player.name}</h3>
-                            <p class="text-sm text-gray-500">Hitting %: <span class="font-semibold text-xl text-gray-800">${stats.percentage}%</span></p>
-                        </div>
-                    </div>
-                    <div class="pl-12 mt-2">
-                        <p class="text-sm text-gray-700">Kills: <span class="font-semibold text-green-600">${stats.kills}</span> | Errors: <span class="font-semibold text-red-600">${stats.errors}</span> | Total: ${stats.total}</p>
-                    </div>
-                </div>`;
-            };
-
-            const groups = [ { title: 'Outsides', positions: ['Outside'] }, { title: 'Opposites', positions: ['Opposite'] }, { title: 'Middles', positions: ['Middle'] }, { title: 'Setters', positions: ['Setter'] }];
-            
-            let finalHtml = groups.map(group => {
-                const playersInGroup = players
-                    .filter(p => p.position && group.positions.includes(p.position))
-                    .map(p => {
-                        const stats = getPlayerHittingStats(p);
-                        return { ...p, hittingPercentage: stats.total > 0 ? stats.percentage : -1 };
-                    })
-                    .sort((a, b) => b.hittingPercentage - a.hittingPercentage);
-
-                if (playersInGroup.length === 0) return '';
-
-                let rankCounter = 1;
-                const groupHtml = playersInGroup.map((player) => {
-                    const rank = player.hittingPercentage >= 0 ? rankCounter++ : null;
-                    return playerCardHtml(player, rank);
-                }).join('');
-
-                return `<div class="mb-6"><h2 class="text-xl font-semibold text-gray-700 pb-2 mb-3 border-b-2 border-indigo-200">${group.title}</h2><div class="space-y-3">${groupHtml}</div></div>`;
-            }).join('');
-
-            const unassignedPlayers = players.filter(p => !p.position).sort((a,b)=>a.name.localeCompare(b.name));
-            if (unassignedPlayers.length > 0) {
-                 const unassignedHtml = unassignedPlayers.map(player => playerCardHtml(player, null)).join('');
-                 finalHtml += `<div class="mb-6"><h2 class="text-xl font-semibold text-gray-700 pb-2 mb-3 border-b-2 border-gray-200">Unassigned</h2><div class="space-y-3">${unassignedHtml}</div></div>`;
-            }
-
-            hittingStatsList.innerHTML = finalHtml || `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">No players found.</div>`;
-            
-            let totalKills = 0;
-            let totalErrors = 0;
-            players.forEach(player => {
-                const todayHits = ((player.hittingByDate || {})[todayKey]) || { kills: 0, errors: 0 };
-                totalKills += todayHits.kills;
-                totalErrors += todayHits.errors;
-            });
-            const totalAttempts = totalKills + totalErrors;
-            const teamPercentage = totalAttempts > 0 ? ((totalKills / totalAttempts) * 100).toFixed(1) : '0.0';
-            hittingTeamSummarySection.innerHTML = `<div class="bg-indigo-600 text-white p-6 rounded-lg shadow-lg"><h2 class="text-2xl font-bold text-center mb-4">Today's Team Summary</h2><div class="flex justify-around text-center"><div><p class="text-lg font-semibold text-indigo-200">Kills</p><p class="text-4xl font-bold">${totalKills}</p></div><div><p class="text-lg font-semibold text-indigo-200">Errors</p><p class="text-4xl font-bold">${totalErrors}</p></div><div><p class="text-lg font-semibold text-indigo-200">Hit %</p><p class="text-4xl font-bold">${teamPercentage}%</p></div></div></div>`;
-        };
-
-
-const renderHittingLog = (players) => {
-            document.getElementById('hitting-log-loading')?.remove();
-            const allDates = new Set();
-            players.forEach(player => { if (player.hittingByDate) { Object.keys(player.hittingByDate).forEach(dateKey => { if (dateKey !== todayKey) { allDates.add(dateKey); } }); } });
-            const sortedDates = Array.from(allDates).sort().reverse();
-            if (sortedDates.length === 0) { hittingLogSection.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">No past hitting data found.</div>`; return; }
-const groups = [ { title: 'Outsides', positions: ['Outside'] }, { title: 'Opposites', positions: ['Opposite'] }, { title: 'Middles', positions: ['Middle'] }, { title: 'Setters', positions: ['Setter'] }];
-            hittingLogSection.innerHTML = sortedDates.map(dateKey => {
-                const displayDate = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                const playersWithStatsOnDate = players.filter(p => p.hittingByDate && p.hittingByDate[dateKey]);
-                if (playersWithStatsOnDate.length === 0) return '';
-
-                let teamTotalKills = 0;
-                let teamTotalErrors = 0;
-                players.forEach(p => {
-                    const hits = (p.hittingByDate || {})[dateKey] || { kills: 0, errors: 0 };
-                    teamTotalKills += hits.kills;
-                    teamTotalErrors += hits.errors;
-                });
-                const teamTotal = teamTotalKills + teamTotalErrors;
-                const teamPercentage = teamTotal > 0 ? ((teamTotalKills / teamTotal) * 100).toFixed(1) : '0.0';
-
-                let playerHtml = groups.map(group => {
-                    const playersInGroup = playersWithStatsOnDate.filter(p => p.position && group.positions.includes(p.position)).sort((a, b) => a.name.localeCompare(b.name));
-                    if (playersInGroup.length === 0) return '';
-                    const playerRows = playersInGroup.map(player => {
-                        const hits = player.hittingByDate[dateKey] || { kills: 0, errors: 0 };
-                        const total = hits.kills + hits.errors;
-                        const percentage = total > 0 ? ((hits.kills / total) * 100).toFixed(1) : '0.0';
-                        return `<div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-medium">${player.name}</span><span class="text-gray-600">Hit %: <span class="font-bold text-gray-800">${percentage}%</span> (K:${hits.kills} E:${hits.errors})</span></div>`;
-                    }).join('');
-                    return `<h3 class="text-md font-semibold text-indigo-700 mt-4 mb-2">${group.title}</h3><div>${playerRows}</div>`;
-                }).join('');
-                const unassignedPlayers = playersWithStatsOnDate.filter(p => !p.position).sort((a,b) => a.name.localeCompare(b.name));
-                if (unassignedPlayers.length > 0) {
-                     const playerRows = unassignedPlayers.map(player => {
-                        const hits = player.hittingByDate[dateKey] || { kills: 0, errors: 0 };
-                        const total = hits.kills + hits.errors;
-                        const percentage = total > 0 ? ((hits.kills / total) * 100).toFixed(1) : '0.0';
-                        return `<div class="flex justify-between items-center py-2 border-b border-gray-100"><span class="font-medium">${player.name}</span><span class="text-gray-600">Hit %: <span class="font-bold text-gray-800">${percentage}%</span> (K:${hits.kills} E:${hits.errors})</span></div>`;
-                    }).join('');
-                     playerHtml += `<h3 class="text-md font-semibold text-indigo-700 mt-4 mb-2">Unassigned</h3><div>${playerRows}</div>`;
-                }
-                return `<div class="bg-white rounded-lg shadow-md">
-                    <div class="hitting-log-toggle p-6 cursor-pointer">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h2 class="text-xl font-bold text-gray-800">${displayDate}</h2>
-                                <p class="text-sm text-gray-500">Team Hit %: <span class="font-semibold">${teamPercentage}%</span> (K:${teamTotalKills} E:${teamTotalErrors})</p>
-                            </div>
-                            <svg class="hitting-chevron-icon w-6 h-6 text-gray-400 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="hitting-log-details hidden px-6 pb-6">
-                        <div class="border-t pt-4">
-                            ${playerHtml}
-                        </div>
-                    </div>
-                </div>`;
-            }).join('');
-        };
-
-        const renderHittingProgress = (players) => {
-            document.getElementById('hitting-progress-loading')?.remove();
-            if (players.length === 0) {
-                hittingProgressSection.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Add players to the roster to see hitting progress charts.</div>`;
-                return;
-            }
-            hittingProgressSection.innerHTML = '';
-            players.sort((a, b) => a.name.localeCompare(b.name)).forEach(player => {
-                const hittingByDate = player.hittingByDate || {};
-                const practiceDates = Object.keys(hittingByDate).sort();
-                
-                const chartContainer = document.createElement('div');
-                chartContainer.className = 'bg-white p-6 rounded-lg shadow-md';
-                chartContainer.id = `hitting-chart-container-${player.id}`;
-                hittingProgressSection.appendChild(chartContainer);
-
-                if (practiceDates.length < 2) {
-                     chartContainer.innerHTML = `<h3 class="font-bold text-lg text-indigo-700">${player.name}</h3><p class="text-gray-500 text-sm mt-2">Not enough data to show progress. At least two practices are needed.</p>`;
-                    return;
-                }
-                const chartData = { labels: [], percentages: [] };
-                practiceDates.forEach(dateKey => {
-                    const hits = hittingByDate[dateKey] || { kills: 0, errors: 0 };
-                    const total = hits.kills + hits.errors;
-                    if (total > 0) {
-                        const percentage = (hits.kills / total) * 100;
-                        chartData.labels.push(new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                        chartData.percentages.push(percentage);
+                } else if (lastStat.type === 'hitting') {
+                    const action = lastStat.action;
+                    const hittingByDate = playerData.hittingByDate || {};
+                    const dateHits = hittingByDate[dateKey] || { kills: 0, errors: 0 };
+                    if (action === 'kill' && dateHits.kills > 0) {
+                        dateHits.kills -= 1;
+                    } else if (action === 'error' && dateHits.errors > 0) {
+                        dateHits.errors -= 1;
                     }
-                });
-
-                chartContainer.innerHTML = `<h3 class="font-bold text-lg text-indigo-700 mb-4">${player.name}'s Hitting Progress</h3>`;
-                const canvas = document.createElement('canvas');
-                chartContainer.appendChild(canvas);
-
-                if (playerCharts[`hitting-${player.id}`]) { playerCharts[`hitting-${player.id}`].destroy(); }
-                playerCharts[`hitting-${player.id}`] = new Chart(canvas.getContext('2d'), {
-                    type: 'line',
-                    data: { labels: chartData.labels, datasets: [{ label: 'Hitting %', data: chartData.percentages, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.1)', fill: true, tension: 0.1 }] },
-                    options: { scales: { y: { beginAtZero: true, max: 100 } }, responsive: true, maintainAspectRatio: true }
-                });
-            });
+                    hittingByDate[dateKey] = dateHits;
+                    const newLastStats = lastStats.slice(0, -1);
+                    await updateDoc(playerDocRef, { hittingByDate, lastStats: newLastStats });
+                }
+                
+            } catch (error) {
+                console.error("Error undoing last stat:", error);
+            }
         };
-const openPlayerSelectModal = () => {
-            if (currentMode === 'passing') {
+
+        // UNIFIED STAT ASSIGNMENT - Both Practice and Game stats go to same player record
+        const handleAssignPass = async (playerId) => {
+            if (selectedRating === null) return;
+            if (!currentTeamId) return;
+            
+            try {
+                const playerDocRef = doc(db, "teams", currentTeamId, "roster", playerId);
+                const playerDocSnap = await getDoc(playerDocRef);
+                if (!playerDocSnap.exists()) return;
+                
+                const playerData = playerDocSnap.data();
+                const currentStats = playerData.statsByDate || {};
+                const todayPasses = currentStats[todayKey] || [];
+                const updatedTodayPasses = [...todayPasses, selectedRating];
+                const updatedStats = { ...currentStats, [todayKey]: updatedTodayPasses };
+                
+                const lastStats = playerData.lastStats || [];
+                const newLastStats = [...lastStats, { 
+                    type: 'passing', 
+                    value: selectedRating, 
+                    date: todayKey, 
+                    timestamp: Date.now(),
+                    context: currentMode === 'game' ? `Game: ${gamesData.find(g => g.id === currentGameId)?.name || 'Unknown'}` : 'Practice'
+                }];
+                if (newLastStats.length > 10) newLastStats.shift();
+                
+                await updateDoc(playerDocRef, { statsByDate: updatedStats, lastStats: newLastStats });
+                
+                if (currentMode === 'practice') {
+                    ratingHelper.textContent = `Assigned '${selectedRating}'! Select another rating.`;
+                }
+                
+            } catch (error) { 
+                console.error("Error assigning pass: ", error); 
+            } finally { 
+                closePlayerSelectModal(); 
+            }
+        };
+
+        const handleAssignHit = async (playerId) => {
+            if (!selectedHittingAction) return;
+            if (!currentTeamId) return;
+            
+            try {
+                const playerDocRef = doc(db, "teams", currentTeamId, "roster", playerId);
+                const playerDocSnap = await getDoc(playerDocRef);
+                if (!playerDocSnap.exists()) return;
+                
+                const playerData = playerDocSnap.data();
+                const currentHitting = playerData.hittingByDate || {};
+                const todayHits = currentHitting[todayKey] || { kills: 0, errors: 0 };
+                
+                if (selectedHittingAction === 'kill') {
+                    todayHits.kills += 1;
+                } else if (selectedHittingAction === 'error') {
+                    todayHits.errors += 1;
+                }
+                
+                const updatedHitting = { ...currentHitting, [todayKey]: todayHits };
+                
+                const lastStats = playerData.lastStats || [];
+                const newLastStats = [...lastStats, { 
+                    type: 'hitting', 
+                    action: selectedHittingAction, 
+                    date: todayKey, 
+                    timestamp: Date.now(),
+                    context: currentMode === 'game' ? `Game: ${gamesData.find(g => g.id === currentGameId)?.name || 'Unknown'}` : 'Practice'
+                }];
+                if (newLastStats.length > 10) newLastStats.shift();
+                
+                await updateDoc(playerDocRef, { hittingByDate: updatedHitting, lastStats: newLastStats });
+                
+                if (currentMode === 'practice') {
+                    practiceHittingActionHelper.textContent = `Assigned '${selectedHittingAction}'! Select another action.`;
+                }
+                
+            } catch (error) { 
+                console.error("Error assigning hit: ", error); 
+            } finally { 
+                closePlayerSelectModal(); 
+            }
+        };
+// Player Select Modal
+        const openPlayerSelectModal = () => {
+            if (currentStatType === 'passing') {
                 modalTitle.textContent = `Assign Rating: ${selectedRating}`;
             } else {
                 modalTitle.textContent = `Assign ${selectedHittingAction}`;
             }
-            const groups = [ { title: 'Liberos', positions: ['Libero'] }, { title: 'Outsides', positions: ['Outside'] }, { title: 'Middles / Opposites / Setters', positions: ['Middle', 'Opposite', 'Setter'] }];
-            const assignedPositions = groups.flatMap(g => g.positions);
-            const playerButtonHtml = (player) => `<button data-id="${player.id}" class="player-select-btn w-full text-left p-3 rounded-lg bg-gray-100 hover:bg-indigo-100">${player.name}</button>`;
-            let modalHtml = groups.map(group => {
-                const playersInGroup = playersCache.filter(p => p.position && group.positions.includes(p.position)).sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Use appropriate position groups based on stat type
+            const positionGroups = currentStatType === 'passing' ? passingPositionGroups : hittingPositionGroups;
+            const assignedPositions = positionGroups.flatMap(g => g.positions);
+            
+            const playerButtonHtml = (player) => `
+                <button data-id="${player.id}" class="player-select-btn w-full text-left p-3 rounded-lg bg-gray-100 hover:bg-indigo-100 transition">
+                    ${player.name}
+                </button>`;
+            
+            let modalHtml = positionGroups.map(group => {
+                const playersInGroup = playersCache
+                    .filter(p => p.position && group.positions.includes(p.position))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                
                 if (playersInGroup.length === 0) return '';
-                return `<div class="mb-3"><h3 class="text-sm font-semibold text-gray-500 mb-2 px-2">${group.title}</h3><div class="space-y-2">${playersInGroup.map(playerButtonHtml).join('')}</div></div>`;
+                
+                return `
+                    <div class="mb-3">
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2 px-2">${group.title}</h3>
+                        <div class="space-y-2">${playersInGroup.map(playerButtonHtml).join('')}</div>
+                    </div>`;
             }).join('');
-            const unassignedPlayers = playersCache.filter(p => !p.position || !assignedPositions.includes(p.position)).sort((a, b) => a.name.localeCompare(b.name));
+            
+            const unassignedPlayers = playersCache
+                .filter(p => !p.position || !assignedPositions.includes(p.position))
+                .sort((a, b) => a.name.localeCompare(b.name));
+            
             if (unassignedPlayers.length > 0) {
-                modalHtml += `<div class="mb-3"><h3 class="text-sm font-semibold text-gray-500 mb-2 px-2">Unassigned</h3><div class="space-y-2">${unassignedPlayers.map(playerButtonHtml).join('')}</div></div>`;
+                modalHtml += `
+                    <div class="mb-3">
+                        <h3 class="text-sm font-semibold text-gray-500 mb-2 px-2">Unassigned</h3>
+                        <div class="space-y-2">${unassignedPlayers.map(playerButtonHtml).join('')}</div>
+                    </div>`;
             }
-            modalPlayerList.innerHTML = modalHtml;
-            if (modalPlayerList.innerHTML.trim() === '') {
-                 modalPlayerList.innerHTML = `<p class="text-center text-gray-500">No players found in the roster.</p>`;
-            }
+            
+            modalPlayerList.innerHTML = modalHtml || `<p class="text-center text-gray-500">No players found in the roster.</p>`;
             playerSelectModal.classList.remove('hidden');
         };
 
@@ -911,55 +1025,7 @@ const openPlayerSelectModal = () => {
             editingDateKey = null;
             dateChangeModal.classList.add('hidden');
         };
-// Firestore CRUD Operations
-        const handleAddPlayer = async () => {
-            const name = playerNameInput.value.trim();
-            const position = document.getElementById('player-position-select').value;
-            if (name && position && rosterCollectionRef) {
-                try { await addDoc(rosterCollectionRef, { name: name, position: position, statsByDate: {}, hittingByDate: {} }); playerNameInput.value = ''; } 
-                catch (error) { console.error("Error adding player: ", error); }
-            }
-        };
 
-        const handleDeletePlayer = async (playerId) => {
-            if (!currentTeamId) return;
-            try { await deleteDoc(doc(db, "teams", currentTeamId, "roster", playerId)); } 
-            catch (error) { console.error("Error deleting player: ", error); }
-        };
-
-        const handleAssignPass = async (playerId) => {
-            if (currentMode === 'passing' && selectedRating === null) return;
-            if (currentMode === 'hitting' && !selectedHittingAction) return;
-            if (!currentTeamId) return;
-            
-            try {
-                const playerDocRef = doc(db, "teams", currentTeamId, "roster", playerId);
-                const playerDocSnap = await getDoc(playerDocRef);
-                if (playerDocSnap.exists()) {
-                    if (currentMode === 'passing') {
-                        const currentStats = playerDocSnap.data().statsByDate || {};
-                        const todayPasses = currentStats[todayKey] || [];
-                        const updatedTodayPasses = [...todayPasses, selectedRating];
-                        const updatedStats = { ...currentStats, [todayKey]: updatedTodayPasses };
-                        await updateDoc(playerDocRef, { statsByDate: updatedStats });
-                        ratingHelper.textContent = `Assigned '${selectedRating}'! Select another rating.`;
-                    } else if (currentMode === 'hitting') {
-                        const currentHitting = playerDocSnap.data().hittingByDate || {};
-                        const todayHits = currentHitting[todayKey] || { kills: 0, errors: 0 };
-                        if (selectedHittingAction === 'kill') {
-                            todayHits.kills += 1;
-                        } else if (selectedHittingAction === 'error') {
-                            todayHits.errors += 1;
-                        }
-                        const updatedHitting = { ...currentHitting, [todayKey]: todayHits };
-                        await updateDoc(playerDocRef, { hittingByDate: updatedHitting });
-                        hittingActionHelper.textContent = `Assigned '${selectedHittingAction}'! Select another action.`;
-                    }
-                }
-            } catch (error) { console.error("Error assigning stat: ", error); }
-            finally { closePlayerSelectModal(); }
-        };
-        
         const handleDateChangeSave = async () => {
             const oldDateKey = editingDateKey;
             const newDateKey = dateChangeInput.value;
@@ -992,37 +1058,889 @@ const openPlayerSelectModal = () => {
             try {
                 await Promise.all(updatePromises);
             } catch (error) {
-                console.error("Error changing practice date:", error);
+                console.error("Error changing date:", error);
             } finally {
                 closeDateChangeModal();
             }
         };
-const handleDownloadCSV = () => {
+
+        const openNewGameModal = () => {
+            newGameNameInput.value = `Game ${gamesData.length + 1}`;
+            newGameModal.classList.remove('hidden');
+        };
+
+        const closeNewGameModal = () => {
+            newGameModal.classList.add('hidden');
+            newGameNameInput.value = '';
+        };
+
+        const handleCreateGame = async () => {
+            const gameName = newGameNameInput.value.trim();
+            if (!gameName || !gamesCollectionRef) return;
+            
+            try {
+                const newGameDoc = await addDoc(gamesCollectionRef, {
+                    name: gameName,
+                    date: todayKey,
+                    createdAt: Date.now()
+                });
+                
+                currentGameId = newGameDoc.id;
+                closeNewGameModal();
+                switchToGame(currentGameId);
+            } catch (error) {
+                console.error("Error creating game:", error);
+            }
+        };
+
+        // Practice Mode - Tab Switching
+        const switchPracticeTab = (tab) => {
+            currentPracticeTab = tab;
+            
+            [practicePassingBtn, practiceHittingBtn].forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+                btn.classList.add('border-gray-300', 'text-gray-700');
+            });
+            
+            practicePassingContent.classList.add('hidden');
+            practiceHittingContent.classList.add('hidden');
+            
+            if (tab === 'passing') {
+                practicePassingContent.classList.remove('hidden');
+                practicePassingBtn.classList.remove('border-gray-300', 'text-gray-700');
+                practicePassingBtn.classList.add('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+            } else if (tab === 'hitting') {
+                practiceHittingContent.classList.remove('hidden');
+                practiceHittingBtn.classList.remove('border-gray-300', 'text-gray-700');
+                practiceHittingBtn.classList.add('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+            }
+        };
+
+        const togglePracticeSplitView = () => {
+            practiceSplitView = !practiceSplitView;
+            
+            if (practiceSplitView) {
+                practiceSplitContainer.classList.add('active');
+                practiceSplitPanel.classList.remove('hidden');
+                practiceSplitViewBtn.textContent = 'Exit Split View ✕';
+                updatePracticeSplitView();
+            } else {
+                practiceSplitContainer.classList.remove('active');
+                practiceSplitPanel.classList.add('hidden');
+                practiceSplitViewBtn.textContent = 'Split View 🗗';
+            }
+        };
+
+ const updatePracticeSplitView = () => {
+    if (!practiceSplitView) return;
+    
+    practiceSplitTab = practiceSplitSelect.value;
+    
+    if (practiceSplitTab === 'passing') {
+        practiceSplitContent.innerHTML = `
+            <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
+                <h2 class="text-xl font-semibold mb-2 text-center">Today's Practice - Passing</h2>
+                <p class="text-center text-indigo-600 font-semibold mb-4">(${practiceDateDisplay})</p>
+                <div class="grid grid-cols-4 gap-3">
+                    <button data-rating="0" class="split-rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">0</button>
+                    <button data-rating="1" class="split-rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">1</button>
+                    <button data-rating="2" class="split-rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">2</button>
+                    <button data-rating="3" class="split-rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">3</button>
+                </div>
+                <p class="text-center text-gray-500 mt-4 h-5">Select a rating to assign a pass.</p>
+            </div>
+            ${document.getElementById('practice-passing-stats-list').outerHTML}
+        `;
+    } else if (practiceSplitTab === 'hitting') {
+        practiceSplitContent.innerHTML = `
+            <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
+                <h2 class="text-xl font-semibold mb-2 text-center">Today's Practice - Hitting</h2>
+                <p class="text-center text-indigo-600 font-semibold mb-4">(${practiceDateDisplay})</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button data-action="kill" class="split-hitting-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">Kill</button>
+                    <button data-action="error" class="split-hitting-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">Error</button>
+                </div>
+                <p class="text-center text-gray-500 mt-4 h-5">Select an action to assign.</p>
+            </div>
+            ${document.getElementById('practice-hitting-stats-list').outerHTML}
+        `;
+    }
+};
+// Render Practice Passing Stats
+        const renderPracticePassingStats = () => {
+            if (playersCache.length === 0) {
+                practicePassingStatsList.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Add players to the roster to start tracking stats.</div>`;
+                practicePassingDownloadCsvBtn.disabled = true;
+                practicePassingTeamSummary.innerHTML = '';
+                return;
+            }
+            practicePassingDownloadCsvBtn.disabled = false;
+
+            const getPlayerDailyAverage = (player) => {
+                const statsByDate = player.statsByDate || {};
+                const todayPasses = statsByDate[todayKey] || [];
+                const passCount = todayPasses.length;
+                if (passCount === 0) return -1;
+                const passSum = todayPasses.reduce((sum, current) => sum + current, 0);
+                return passSum / passCount;
+            };
+
+            const playerCardHtml = (player, rank) => {
+                const average = getPlayerDailyAverage(player);
+                const statsByDate = player.statsByDate || {};
+                const todayPasses = statsByDate[todayKey] || [];
+                const passCount = todayPasses.length;
+                
+                const rankHtml = rank
+                    ? `<span class="text-2xl font-bold text-gray-400 w-8 text-center">${rank}.</span>`
+                    : `<span class="text-2xl font-bold text-gray-300 w-8 text-center">-</span>`;
+                
+                const averageDisplay = average >= 0 ? average.toFixed(2) : '0.00';
+                const mainTextColor = rank ? 'text-indigo-700' : 'text-gray-500';
+                const opacityClass = rank ? '' : 'opacity-60';
+
+                return `
+                <div class="bg-white p-4 rounded-lg shadow-sm ${opacityClass}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            ${rankHtml}
+                            <div>
+                                <h3 class="font-bold text-lg ${mainTextColor}">${player.name}</h3>
+                                <p class="text-sm text-gray-500">Today's Avg: <span class="font-semibold text-xl text-gray-800">${averageDisplay}</span></p>
+                            </div>
+                        </div>
+                        <button data-player-id="${player.id}" class="undo-stat-btn text-sm text-red-600 hover:text-red-800 font-semibold underline">
+                            Undo Last
+                        </button>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 pl-12">Today's Passes (${passCount} total):</p>
+                        <p class="text-gray-700 break-words pl-12">${passCount > 0 ? todayPasses.join(', ') : 'No passes recorded for today.'}</p>
+                    </div>
+                </div>`;
+            };
+
+            let finalHtml = passingPositionGroups.map(group => {
+                const playersInGroup = playersCache
+                    .filter(p => p.position && group.positions.includes(p.position))
+                    .map(p => ({ ...p, dailyAverage: getPlayerDailyAverage(p) }))
+                    .sort((a, b) => b.dailyAverage - a.dailyAverage);
+
+                if (playersInGroup.length === 0) return '';
+
+                let rankCounter = 1;
+                const groupHtml = playersInGroup.map((player) => {
+                    const rank = player.dailyAverage >= 0 ? rankCounter++ : null;
+                    return playerCardHtml(player, rank);
+                }).join('');
+
+                return `<div class="mb-6"><h2 class="text-xl font-semibold text-gray-700 pb-2 mb-3 border-b-2 border-indigo-200">${group.title}</h2><div class="space-y-3">${groupHtml}</div></div>`;
+            }).join('');
+
+            practicePassingStatsList.innerHTML = finalHtml || `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">No players found.</div>`;
+            
+            let totalPasses = 0;
+            let totalSum = 0;
+            playersCache.forEach(player => {
+                const todayPasses = (player.statsByDate || {})[todayKey] || [];
+                totalPasses += todayPasses.length;
+                totalSum += todayPasses.reduce((sum, current) => sum + current, 0);
+            });
+            const teamAverage = totalPasses > 0 ? (totalSum / totalPasses).toFixed(2) : '0.00';
+            practicePassingTeamSummary.innerHTML = `<div class="bg-indigo-600 text-white p-6 rounded-lg shadow-lg"><h2 class="text-2xl font-bold text-center mb-4">Today's Team Summary</h2><div class="flex justify-around text-center"><div><p class="text-lg font-semibold text-indigo-200">Total Passes</p><p class="text-4xl font-bold">${totalPasses}</p></div><div><p class="text-lg font-semibold text-indigo-200">Team Average</p><p class="text-4xl font-bold">${teamAverage}</p></div></div></div>`;
+        };
+
+        // Render Practice Hitting Stats
+        const renderPracticeHittingStats = () => {
+            if (playersCache.length === 0) {
+                practiceHittingStatsList.innerHTML = `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Add players to the roster to start tracking hitting stats.</div>`;
+                practiceHittingDownloadCsvBtn.disabled = true;
+                practiceHittingTeamSummary.innerHTML = '';
+                return;
+            }
+            practiceHittingDownloadCsvBtn.disabled = false;
+
+            const getPlayerHittingStats = (player) => {
+                const hittingByDate = player.hittingByDate || {};
+                const todayHits = hittingByDate[todayKey] || { kills: 0, errors: 0 };
+                const total = todayHits.kills + todayHits.errors;
+                const percentage = total > 0 ? ((todayHits.kills / total) * 100).toFixed(1) : 0;
+                return { kills: todayHits.kills, errors: todayHits.errors, total, percentage: parseFloat(percentage) };
+            };
+
+            const playerCardHtml = (player, rank) => {
+                const stats = getPlayerHittingStats(player);
+                
+                const rankHtml = rank
+                    ? `<span class="text-2xl font-bold text-gray-400 w-8 text-center">${rank}.</span>`
+                    : `<span class="text-2xl font-bold text-gray-300 w-8 text-center">-</span>`;
+                
+                const mainTextColor = rank ? 'text-indigo-700' : 'text-gray-500';
+                const opacityClass = rank ? '' : 'opacity-60';
+
+                return `
+                <div class="bg-white p-4 rounded-lg shadow-sm ${opacityClass}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            ${rankHtml}
+                            <div>
+                                <h3 class="font-bold text-lg ${mainTextColor}">${player.name}</h3>
+                                <p class="text-sm text-gray-500">Hitting %: <span class="font-semibold text-xl text-gray-800">${stats.percentage}%</span></p>
+                            </div>
+                        </div>
+                        <button data-player-id="${player.id}" class="undo-stat-btn text-sm text-red-600 hover:text-red-800 font-semibold underline">
+                            Undo Last
+                        </button>
+                    </div>
+                    <div class="pl-12 mt-2">
+                        <p class="text-sm text-gray-700">Kills: <span class="font-semibold text-green-600">${stats.kills}</span> | Errors: <span class="font-semibold text-red-600">${stats.errors}</span> | Total: ${stats.total}</p>
+                    </div>
+                </div>`;
+            };
+
+            let finalHtml = hittingPositionGroups.map(group => {
+                const playersInGroup = playersCache
+                    .filter(p => p.position && group.positions.includes(p.position))
+                    .map(p => {
+                        const stats = getPlayerHittingStats(p);
+                        return { ...p, hittingPercentage: stats.total > 0 ? stats.percentage : -1 };
+                    })
+                    .sort((a, b) => b.hittingPercentage - a.hittingPercentage);
+
+                if (playersInGroup.length === 0) return '';
+
+                let rankCounter = 1;
+                const groupHtml = playersInGroup.map((player) => {
+                    const rank = player.hittingPercentage >= 0 ? rankCounter++ : null;
+                    return playerCardHtml(player, rank);
+                }).join('');
+
+                return `<div class="mb-6"><h2 class="text-xl font-semibold text-gray-700 pb-2 mb-3 border-b-2 border-indigo-200">${group.title}</h2><div class="space-y-3">${groupHtml}</div></div>`;
+            }).join('');
+
+            practiceHittingStatsList.innerHTML = finalHtml || `<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">No players found.</div>`;
+            
+            let totalKills = 0;
+            let totalErrors = 0;
+            playersCache.forEach(player => {
+                const todayHits = ((player.hittingByDate || {})[todayKey]) || { kills: 0, errors: 0 };
+                totalKills += todayHits.kills;
+                totalErrors += todayHits.errors;
+            });
+            const totalAttempts = totalKills + totalErrors;
+            const teamPercentage = totalAttempts > 0 ? ((totalKills / totalAttempts) * 100).toFixed(1) : '0.0';
+            practiceHittingTeamSummary.innerHTML = `<div class="bg-indigo-600 text-white p-6 rounded-lg shadow-lg"><h2 class="text-2xl font-bold text-center mb-4">Today's Team Summary</h2><div class="flex justify-around text-center"><div><p class="text-lg font-semibold text-indigo-200">Kills</p><p class="text-4xl font-bold">${totalKills}</p></div><div><p class="text-lg font-semibold text-indigo-200">Errors</p><p class="text-4xl font-bold">${totalErrors}</p></div><div><p class="text-lg font-semibold text-indigo-200">Hit %</p><p class="text-4xl font-bold">${teamPercentage}%</p></div></div></div>`;
+        };
+// Render Side Panel Roster
+        const renderSideRoster = () => {
+            if (playersCache.length === 0) {
+                sideRosterList.innerHTML = `<div class="text-center text-gray-500 text-sm py-2">No players yet</div>`;
+                return;
+            }
+
+            const positionGroups = [
+                { title: 'Outsides', positions: ['Outside'] },
+                { title: 'Opposites', positions: ['Opposite'] },
+                { title: 'Middles', positions: ['Middle'] },
+                { title: 'Setters', positions: ['Setter'] },
+                { title: 'Liberos', positions: ['Libero'] }
+            ];
+
+            let html = positionGroups.map(group => {
+                const playersInGroup = playersCache
+                    .filter(p => p.position && group.positions.includes(p.position))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+
+                if (playersInGroup.length === 0) return '';
+
+                const playerCards = playersInGroup.map(player => `
+                    <div class="flex justify-between items-center py-2 px-2 bg-gray-50 rounded hover:bg-gray-100">
+                        <span class="text-sm font-medium">${player.name}</span>
+                        <button data-player-id="${player.id}" class="edit-player-btn text-xs text-indigo-600 hover:underline">Edit</button>
+                    </div>
+                `).join('');
+
+                return `<div class="mb-3"><h4 class="text-xs font-bold text-gray-500 uppercase mb-1">${group.title}</h4>${playerCards}</div>`;
+            }).join('');
+
+            const unassignedPlayers = playersCache
+                .filter(p => !p.position || !positionGroups.flatMap(g => g.positions).includes(p.position))
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            if (unassignedPlayers.length > 0) {
+                html += `<div class="mb-3"><h4 class="text-xs font-bold text-gray-500 uppercase mb-1">Other</h4>${unassignedPlayers.map(player => `
+                    <div class="flex justify-between items-center py-2 px-2 bg-gray-50 rounded hover:bg-gray-100">
+                        <span class="text-sm font-medium">${player.name}</span>
+                        <button data-player-id="${player.id}" class="edit-player-btn text-xs text-indigo-600 hover:underline">Edit</button>
+                    </div>
+                `).join('')}</div>`;
+            }
+
+            sideRosterList.innerHTML = html;
+        };
+
+        // Render Side Panel Progress Charts (ALL DATA - Practice + Game)
+        const renderSideProgressCharts = () => {
+            if (playersCache.length === 0) {
+                sideProgressCharts.innerHTML = `<div class="text-center text-gray-500 text-sm py-2">No progress data yet</div>`;
+                return;
+            }
+
+            sideProgressCharts.innerHTML = '';
+            
+            playersCache.sort((a, b) => a.name.localeCompare(b.name)).forEach(player => {
+                const statsByDate = player.statsByDate || {};
+                const practiceDates = Object.keys(statsByDate).sort();
+                
+                const chartContainer = document.createElement('div');
+                chartContainer.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-200';
+                chartContainer.id = `side-chart-container-${player.id}`;
+                sideProgressCharts.appendChild(chartContainer);
+
+                if (practiceDates.length < 2) {
+                    chartContainer.innerHTML = `<h3 class="font-bold text-sm text-indigo-700">${player.name}</h3><p class="text-gray-500 text-xs mt-1">Need 2+ sessions for progress chart</p>`;
+                    return;
+                }
+
+                const chartData = { labels: [], averages: [] };
+                practiceDates.forEach(dateKey => {
+                    const passes = statsByDate[dateKey] || [];
+                    if (passes.length > 0) {
+                        const sum = passes.reduce((s, c) => s + c, 0);
+                        const avg = sum / passes.length;
+                        chartData.labels.push(new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                        chartData.averages.push(avg);
+                    }
+                });
+
+                chartContainer.innerHTML = `<h3 class="font-bold text-sm text-indigo-700 mb-2">${player.name}'s Progress</h3>`;
+                const canvas = document.createElement('canvas');
+                canvas.style.maxHeight = '150px';
+                chartContainer.appendChild(canvas);
+
+                const chartId = `side-chart-${player.id}`;
+                if (playerCharts[chartId]) { playerCharts[chartId].destroy(); }
+                playerCharts[chartId] = new Chart(canvas.getContext('2d'), {
+                    type: 'line',
+                    data: { 
+                        labels: chartData.labels, 
+                        datasets: [{ 
+                            label: 'Passing Avg', 
+                            data: chartData.averages, 
+                            borderColor: '#4f46e5', 
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)', 
+                            fill: true, 
+                            tension: 0.1,
+                            pointRadius: 3
+                        }] 
+                    },
+                    options: { 
+                        scales: { y: { beginAtZero: true, max: 3 } }, 
+                        responsive: true, 
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            });
+        };
+
+        // Render Side Panel Passing Log
+        const renderSidePassingLog = () => {
+            const allDates = new Set();
+            playersCache.forEach(player => { 
+                if (player.statsByDate) { 
+                    Object.keys(player.statsByDate).forEach(dateKey => { 
+                        if (dateKey !== todayKey) { 
+                            allDates.add(dateKey); 
+                        } 
+                    }); 
+                } 
+            });
+            
+            const sortedDates = Array.from(allDates).sort().reverse().slice(0, 5);
+            
+            if (sortedDates.length === 0) { 
+                sidePassingLog.innerHTML = `<div class="text-center text-gray-500 text-sm py-2">No past data</div>`; 
+                return; 
+            }
+
+            sidePassingLog.innerHTML = sortedDates.map(dateKey => {
+                const displayDate = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                
+                let teamTotalPasses = 0;
+                let teamTotalSum = 0;
+                playersCache.forEach(p => {
+                    const passes = (p.statsByDate || {})[dateKey] || [];
+                    teamTotalPasses += passes.length;
+                    teamTotalSum += passes.reduce((s, c) => s + c, 0);
+                });
+                const teamAverage = teamTotalPasses > 0 ? (teamTotalSum / teamTotalPasses).toFixed(2) : '0.00';
+
+                return `
+                    <div class="bg-gray-50 p-2 rounded text-sm hover:bg-gray-100 cursor-pointer log-item" data-date-key="${dateKey}" data-type="passing">
+                        <div class="font-medium text-gray-800">${displayDate}</div>
+                        <div class="text-xs text-gray-600">Avg: ${teamAverage} (${teamTotalPasses} passes)</div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        // Render Side Panel Hitting Log
+        const renderSideHittingLog = () => {
+            const allDates = new Set();
+            playersCache.forEach(player => { 
+                if (player.hittingByDate) { 
+                    Object.keys(player.hittingByDate).forEach(dateKey => { 
+                        if (dateKey !== todayKey) { 
+                            allDates.add(dateKey); 
+                        } 
+                    }); 
+                } 
+            });
+            
+            const sortedDates = Array.from(allDates).sort().reverse().slice(0, 5);
+            
+            if (sortedDates.length === 0) { 
+                sideHittingLog.innerHTML = `<div class="text-center text-gray-500 text-sm py-2">No past data</div>`; 
+                return; 
+            }
+
+            sideHittingLog.innerHTML = sortedDates.map(dateKey => {
+                const displayDate = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                
+                let teamTotalKills = 0;
+                let teamTotalErrors = 0;
+                playersCache.forEach(p => {
+                    const hits = (p.hittingByDate || {})[dateKey] || { kills: 0, errors: 0 };
+                    teamTotalKills += hits.kills;
+                    teamTotalErrors += hits.errors;
+                });
+                const teamTotal = teamTotalKills + teamTotalErrors;
+                const teamPercentage = teamTotal > 0 ? ((teamTotalKills / teamTotal) * 100).toFixed(1) : '0.0';
+
+                return `
+                    <div class="bg-gray-50 p-2 rounded text-sm hover:bg-gray-100 cursor-pointer">
+                        <div class="font-medium text-gray-800">${displayDate}</div>
+                        <div class="text-xs text-gray-600">Hit %: ${teamPercentage}% (K:${teamTotalKills} E:${teamTotalErrors})</div>
+                    </div>
+                `;
+            }).join('');
+        };
+// Game Mode - Tab Management
+        const renderGameTabs = () => {
+            if (gamesData.length === 0) {
+                gameTabsContainer.innerHTML = `<div class="text-sm text-gray-500 py-2">No games created yet</div>`;
+                gameContentArea.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center"><p class="text-gray-500 mb-4">Click "+ New Game" to start tracking a game</p></div>`;
+                return;
+            }
+
+            gameTabsContainer.innerHTML = gamesData.map(game => `
+                <button data-game-id="${game.id}" class="game-tab-btn px-4 py-2 rounded-lg font-semibold ${currentGameId === game.id ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-indigo-500'} transition">
+                    ${game.name}
+                </button>
+            `).join('');
+
+            if (!currentGameId && gamesData.length > 0) {
+                currentGameId = gamesData[0].id;
+            }
+        };
+
+        const switchToGame = (gameId) => {
+            currentGameId = gameId;
+            daySummaryContent.classList.add('hidden');
+            gameContentArea.classList.remove('hidden');
+            renderGameTabs();
+            renderGameContent(gameId);
+        };
+
+        const switchToDaySummary = () => {
+            currentGameId = null;
+            gameContentArea.classList.add('hidden');
+            daySummaryContent.classList.remove('hidden');
+            renderGameTabs();
+            renderDaySummary();
+        };
+
+        // Render Individual Game Content
+        const renderGameContent = (gameId) => {
+            const game = gamesData.find(g => g.id === gameId);
+            if (!game) return;
+
+            gameContentArea.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <button id="game-passing-tab-${gameId}" class="game-stat-type-btn px-6 py-4 rounded-lg font-bold text-lg bg-blue-600 text-white hover:bg-blue-700 transition">
+                        Passing
+                    </button>
+                    <button id="game-hitting-tab-${gameId}" class="game-stat-type-btn px-6 py-4 rounded-lg font-bold text-lg bg-white text-gray-700 border-2 border-gray-300 hover:border-red-500 transition">
+                        Hitting
+                    </button>
+                </div>
+
+                <div id="game-passing-section-${gameId}">
+                    <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
+                        <h2 class="text-xl font-semibold mb-2 text-center">${game.name} - Passing</h2>
+                        <div class="grid grid-cols-4 gap-3">
+                            <button data-rating="0" class="game-rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">0</button>
+                            <button data-rating="1" class="game-rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">1</button>
+                            <button data-rating="2" class="game-rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">2</button>
+                            <button data-rating="3" class="game-rating-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">3</button>
+                        </div>
+                        <p class="game-rating-helper text-center text-gray-500 mt-4 h-5">Select a rating to assign a pass.</p>
+                    </div>
+                    <div id="game-passing-stats-${gameId}"></div>
+                    <div id="game-passing-summary-${gameId}" class="mt-6"></div>
+                </div>
+
+                <div id="game-hitting-section-${gameId}" class="hidden">
+                    <div class="bg-white p-6 rounded-lg shadow-md sticky top-4 z-10 mb-6">
+                        <h2 class="text-xl font-semibold mb-2 text-center">${game.name} - Hitting</h2>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button data-action="kill" class="game-hitting-action-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">Kill</button>
+                            <button data-action="error" class="game-hitting-action-button text-2xl font-bold py-4 rounded-lg bg-white shadow-sm hover:shadow-md transition duration-200">Error</button>
+                        </div>
+                        <p class="game-hitting-helper text-center text-gray-500 mt-4 h-5">Select an action to assign.</p>
+                    </div>
+                    <div id="game-hitting-stats-${gameId}"></div>
+                    <div id="game-hitting-summary-${gameId}" class="mt-6"></div>
+                </div>
+            `;
+
+            renderGamePassingStats(gameId);
+            renderGameHittingStats(gameId);
+        };
+
+        const renderGamePassingStats = (gameId) => {
+            const container = document.getElementById(`game-passing-stats-${gameId}`);
+            if (!container) return;
+
+            const getPlayerGameAverage = (player) => {
+                const passes = (player.statsByDate || {})[todayKey] || [];
+                if (passes.length === 0) return -1;
+                const sum = passes.reduce((s, c) => s + c, 0);
+                return sum / passes.length;
+            };
+
+            const playerCardHtml = (player, rank) => {
+                const passes = (player.statsByDate || {})[todayKey] || [];
+                const passCount = passes.length;
+                const average = getPlayerGameAverage(player);
+                
+                const rankHtml = rank
+                    ? `<span class="text-2xl font-bold text-gray-400 w-8 text-center">${rank}.</span>`
+                    : `<span class="text-2xl font-bold text-gray-300 w-8 text-center">-</span>`;
+                
+                const averageDisplay = average >= 0 ? average.toFixed(2) : '0.00';
+                const mainTextColor = rank ? 'text-indigo-700' : 'text-gray-500';
+                const opacityClass = rank ? '' : 'opacity-60';
+
+                return `
+                <div class="bg-white p-4 rounded-lg shadow-sm ${opacityClass}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            ${rankHtml}
+                            <div>
+                                <h3 class="font-bold text-lg ${mainTextColor}">${player.name}</h3>
+                                <p class="text-sm text-gray-500">Today's Avg: <span class="font-semibold text-xl text-gray-800">${averageDisplay}</span></p>
+                            </div>
+                        </div>
+                        <button data-player-id="${player.id}" class="undo-stat-btn text-sm text-red-600 hover:text-red-800 font-semibold underline">
+                            Undo Last
+                        </button>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 pl-12">Passes (${passCount} total):</p>
+                        <p class="text-gray-700 break-words pl-12">${passCount > 0 ? passes.join(', ') : 'No passes recorded.'}</p>
+                    </div>
+                </div>`;
+            };
+
+            let html = passingPositionGroups.map(group => {
+                const playersInGroup = playersCache
+                    .filter(p => p.position && group.positions.includes(p.position))
+                    .map(p => ({ ...p, gameAverage: getPlayerGameAverage(p) }))
+                    .sort((a, b) => b.gameAverage - a.gameAverage);
+
+                if (playersInGroup.length === 0) return '';
+
+                let rankCounter = 1;
+                const groupHtml = playersInGroup.map((player) => {
+                    const rank = player.gameAverage >= 0 ? rankCounter++ : null;
+                    return playerCardHtml(player, rank);
+                }).join('');
+
+                return `<div class="mb-6"><h2 class="text-xl font-semibold text-gray-700 pb-2 mb-3 border-b-2 border-indigo-200">${group.title}</h2><div class="space-y-3">${groupHtml}</div></div>`;
+            }).join('');
+
+            container.innerHTML = html || `<div class="text-center text-gray-500 py-4">No stats recorded yet</div>`;
+
+            let totalPasses = 0;
+            let totalSum = 0;
+            playersCache.forEach(player => {
+                const passes = (player.statsByDate || {})[todayKey] || [];
+                totalPasses += passes.length;
+                totalSum += passes.reduce((s, c) => s + c, 0);
+            });
+            const teamAverage = totalPasses > 0 ? (totalSum / totalPasses).toFixed(2) : '0.00';
+
+            const summaryContainer = document.getElementById(`game-passing-summary-${gameId}`);
+            if (summaryContainer) {
+                summaryContainer.innerHTML = `<div class="bg-blue-600 text-white p-6 rounded-lg shadow-lg"><h3 class="text-xl font-bold text-center mb-3">Today's Stats</h3><div class="flex justify-around text-center"><div><p class="text-sm font-semibold text-blue-200">Total Passes</p><p class="text-3xl font-bold">${totalPasses}</p></div><div><p class="text-sm font-semibold text-blue-200">Team Average</p><p class="text-3xl font-bold">${teamAverage}</p></div></div></div>`;
+            }
+        };
+
+        const renderGameHittingStats = (gameId) => {
+            const container = document.getElementById(`game-hitting-stats-${gameId}`);
+            if (!container) return;
+
+            const getPlayerGameHittingStats = (player) => {
+                const hits = (player.hittingByDate || {})[todayKey] || { kills: 0, errors: 0 };
+                const total = hits.kills + hits.errors;
+                const percentage = total > 0 ? ((hits.kills / total) * 100).toFixed(1) : 0;
+                return { kills: hits.kills, errors: hits.errors, total, percentage: parseFloat(percentage) };
+            };
+
+            const playerCardHtml = (player, rank) => {
+                const stats = getPlayerGameHittingStats(player);
+                
+                const rankHtml = rank
+                    ? `<span class="text-2xl font-bold text-gray-400 w-8 text-center">${rank}.</span>`
+                    : `<span class="text-2xl font-bold text-gray-300 w-8 text-center">-</span>`;
+                
+                const mainTextColor = rank ? 'text-indigo-700' : 'text-gray-500';
+                const opacityClass = rank ? '' : 'opacity-60';
+
+                return `
+                <div class="bg-white p-4 rounded-lg shadow-sm ${opacityClass}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            ${rankHtml}
+                            <div>
+                                <h3 class="font-bold text-lg ${mainTextColor}">${player.name}</h3>
+                                <p class="text-sm text-gray-500">Hit %: <span class="font-semibold text-xl text-gray-800">${stats.percentage}%</span></p>
+                            </div>
+                        </div>
+                        <button data-player-id="${player.id}" class="undo-stat-btn text-sm text-red-600 hover:text-red-800 font-semibold underline">
+                            Undo Last
+                        </button>
+                    </div>
+                    <div class="pl-12 mt-2">
+                        <p class="text-sm text-gray-700">Kills: <span class="font-semibold text-green-600">${stats.kills}</span> | Errors: <span class="font-semibold text-red-600">${stats.errors}</span> | Total: ${stats.total}</p>
+                    </div>
+                </div>`;
+            };
+
+            let html = hittingPositionGroups.map(group => {
+                const playersInGroup = playersCache
+                    .filter(p => p.position && group.positions.includes(p.position))
+                    .map(p => {
+                        const stats = getPlayerGameHittingStats(p);
+                        return { ...p, hittingPercentage: stats.total > 0 ? stats.percentage : -1 };
+                    })
+                    .sort((a, b) => b.hittingPercentage - a.hittingPercentage);
+
+                if (playersInGroup.length === 0) return '';
+
+                let rankCounter = 1;
+                const groupHtml = playersInGroup.map((player) => {
+                    const rank = player.hittingPercentage >= 0 ? rankCounter++ : null;
+                    return playerCardHtml(player, rank);
+                }).join('');
+
+                return `<div class="mb-6"><h2 class="text-xl font-semibold text-gray-700 pb-2 mb-3 border-b-2 border-indigo-200">${group.title}</h2><div class="space-y-3">${groupHtml}</div></div>`;
+            }).join('');
+
+            container.innerHTML = html || `<div class="text-center text-gray-500 py-4">No stats recorded yet</div>`;
+
+            let totalKills = 0;
+            let totalErrors = 0;
+            playersCache.forEach(player => {
+                const hits = (player.hittingByDate || {})[todayKey] || { kills: 0, errors: 0 };
+                totalKills += hits.kills;
+                totalErrors += hits.errors;
+            });
+            const totalAttempts = totalKills + totalErrors;
+            const teamPercentage = totalAttempts > 0 ? ((totalKills / totalAttempts) * 100).toFixed(1) : '0.0';
+
+            const summaryContainer = document.getElementById(`game-hitting-summary-${gameId}`);
+            if (summaryContainer) {
+                summaryContainer.innerHTML = `<div class="bg-red-600 text-white p-6 rounded-lg shadow-lg"><h3 class="text-xl font-bold text-center mb-3">Today's Stats</h3><div class="flex justify-around text-center"><div><p class="text-sm font-semibold text-red-200">Kills</p><p class="text-3xl font-bold">${totalKills}</p></div><div><p class="text-sm font-semibold text-red-200">Errors</p><p class="text-3xl font-bold">${totalErrors}</p></div><div><p class="text-sm font-semibold text-red-200">Hit %</p><p class="text-3xl font-bold">${teamPercentage}%</p></div></div></div>`;
+            }
+        };
+// Render Day Summary (shows combined stats from all games today)
+        const renderDaySummary = () => {
+            if (gamesData.length === 0) {
+                document.getElementById('day-summary-games-list').innerHTML = `<p class="text-center text-gray-500">No games played today</p>`;
+                document.getElementById('day-summary-player-stats').innerHTML = `<p class="text-center text-gray-500">No player data</p>`;
+                document.getElementById('day-summary-total-passes').textContent = '0';
+                document.getElementById('day-summary-passing-avg').textContent = '0.00';
+                document.getElementById('day-summary-total-kills').textContent = '0';
+                document.getElementById('day-summary-total-errors').textContent = '0';
+                document.getElementById('day-summary-hitting-pct').textContent = '0.0%';
+                return;
+            }
+
+            // Calculate totals from today's player data
+            let totalPasses = 0;
+            let totalPassSum = 0;
+            let totalKills = 0;
+            let totalErrors = 0;
+
+            playersCache.forEach(player => {
+                const passes = (player.statsByDate || {})[todayKey] || [];
+                totalPasses += passes.length;
+                totalPassSum += passes.reduce((s, c) => s + c, 0);
+
+                const hits = (player.hittingByDate || {})[todayKey] || { kills: 0, errors: 0 };
+                totalKills += hits.kills;
+                totalErrors += hits.errors;
+            });
+
+            const overallPassingAvg = totalPasses > 0 ? (totalPassSum / totalPasses).toFixed(2) : '0.00';
+            const totalHitAttempts = totalKills + totalErrors;
+            const overallHittingPct = totalHitAttempts > 0 ? ((totalKills / totalHitAttempts) * 100).toFixed(1) : '0.0';
+
+            document.getElementById('day-summary-total-passes').textContent = totalPasses;
+            document.getElementById('day-summary-passing-avg').textContent = overallPassingAvg;
+            document.getElementById('day-summary-total-kills').textContent = totalKills;
+            document.getElementById('day-summary-total-errors').textContent = totalErrors;
+            document.getElementById('day-summary-hitting-pct').textContent = overallHittingPct + '%';
+
+            // Games list
+            const gamesListHtml = gamesData.map(game => `
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-bold text-gray-800">${game.name}</h4>
+                    <p class="text-sm text-gray-600 mt-1">Game tracked today</p>
+                </div>
+            `).join('');
+
+            document.getElementById('day-summary-games-list').innerHTML = gamesListHtml;
+
+            // Player breakdown
+            const playerStatsHtml = playersCache.sort((a, b) => a.name.localeCompare(b.name)).map(player => {
+                const playerPasses = (player.statsByDate || {})[todayKey] || [];
+                const passCount = playerPasses.length;
+                const passAvg = passCount > 0 ? (playerPasses.reduce((s, c) => s + c, 0) / passCount).toFixed(2) : '0.00';
+
+                const playerHits = (player.hittingByDate || {})[todayKey] || { kills: 0, errors: 0 };
+                const hitTotal = playerHits.kills + playerHits.errors;
+                const hitPct = hitTotal > 0 ? ((playerHits.kills / hitTotal) * 100).toFixed(1) : '0.0';
+
+                return `
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-gray-800">${player.name}</span>
+                            <span class="text-xs text-gray-500 uppercase">${player.position || 'N/A'}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <p class="text-gray-600">Pass Avg: <span class="font-semibold">${passAvg}</span></p>
+                                <p class="text-xs text-gray-500">${passCount} passes</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Hit %: <span class="font-semibold">${hitPct}%</span></p>
+                                <p class="text-xs text-gray-500">K:${playerHits.kills} E:${playerHits.errors}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('day-summary-player-stats').innerHTML = playerStatsHtml || `<p class="text-center text-gray-500">No player data</p>`;
+        };
+
+        // Game Split View
+        const toggleGameSplitView = () => {
+            gameSplitView = !gameSplitView;
+            
+            if (gameSplitView) {
+                gameSplitContainer.classList.add('active');
+                gameSplitPanel.classList.remove('hidden');
+                gameSplitViewBtn.textContent = 'Exit Split View ✕';
+                updateGameSplitGameSelect();
+                updateGameSplitView();
+            } else {
+                gameSplitContainer.classList.remove('active');
+                gameSplitPanel.classList.add('hidden');
+                gameSplitViewBtn.textContent = 'Split View 🗗';
+            }
+        };
+
+        const updateGameSplitGameSelect = () => {
+            const options = gamesData.map(game => 
+                `<option value="${game.id}" ${gameSplitGameId === game.id ? 'selected' : ''}>${game.name}</option>`
+            ).join('');
+            gameSplitGameSelect.innerHTML = options || '<option value="">No games</option>';
+            
+            if (!gameSplitGameId && gamesData.length > 0) {
+                gameSplitGameId = gamesData[0].id;
+            }
+        };
+
+        const updateGameSplitView = () => {
+            if (!gameSplitView) return;
+            
+            gameSplitGameId = gameSplitGameSelect.value;
+            gameSplitType = gameSplitTypeSelect.value;
+            
+            const game = gamesData.find(g => g.id === gameSplitGameId);
+            if (!game) return;
+
+            if (gameSplitType === 'passing') {
+                gameSplitContent.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+                        <h3 class="font-bold text-center mb-3">${game.name} - Passing</h3>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button data-rating="0" data-split="true" class="split-rating-button text-xl font-bold py-3 rounded-lg bg-white shadow-sm hover:shadow-md transition">0</button>
+                            <button data-rating="1" data-split="true" class="split-rating-button text-xl font-bold py-3 rounded-lg bg-white shadow-sm hover:shadow-md transition">1</button>
+                            <button data-rating="2" data-split="true" class="split-rating-button text-xl font-bold py-3 rounded-lg bg-white shadow-sm hover:shadow-md transition">2</button>
+                            <button data-rating="3" data-split="true" class="split-rating-button text-xl font-bold py-3 rounded-lg bg-white shadow-sm hover:shadow-md transition">3</button>
+                        </div>
+                    </div>
+                    <div id="split-game-passing-stats"></div>
+                `;
+                
+                const originalPassing = document.getElementById(`game-passing-stats-${gameSplitGameId}`);
+                if (originalPassing) {
+                    document.getElementById('split-game-passing-stats').innerHTML = originalPassing.innerHTML;
+                }
+                
+            } else if (gameSplitType === 'hitting') {
+                gameSplitContent.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg shadow-md mb-4">
+                        <h3 class="font-bold text-center mb-3">${game.name} - Hitting</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button data-action="kill" data-split="true" class="split-hitting-button text-xl font-bold py-3 rounded-lg bg-white shadow-sm hover:shadow-md transition">Kill</button>
+                            <button data-action="error" data-split="true" class="split-hitting-button text-xl font-bold py-3 rounded-lg bg-white shadow-sm hover:shadow-md transition">Error</button>
+                        </div>
+                    </div>
+                    <div id="split-game-hitting-stats"></div>
+                `;
+                
+                const originalHitting = document.getElementById(`game-hitting-stats-${gameSplitGameId}`);
+                if (originalHitting) {
+                    document.getElementById('split-game-hitting-stats').innerHTML = originalHitting.innerHTML;
+                }
+            }
+        };
+
+        // CSV Download Functions
+        const handleDownloadPracticePassingCSV = () => {
             if (playersCache.length === 0) return;
-            let csvContent = "Player Name,Position,Overall Passing Average\n";
+            let csvContent = "Player Name,Position,Overall Passing Average,Total Passes\n";
             playersCache.forEach(player => {
                 const statsByDate = player.statsByDate || {};
                 const allPasses = Object.values(statsByDate).flat();
                 const passCount = allPasses.length;
                 const passSum = allPasses.reduce((sum, current) => sum + current, 0);
                 const overallAverage = passCount > 0 ? (passSum / passCount).toFixed(2) : '0.00';
-                csvContent += `"${player.name}","${player.position || 'N/A'}",${overallAverage}\n`;
+                csvContent += `"${player.name}","${player.position || 'N/A'}",${overallAverage},${passCount}\n`;
             });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8,' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            const exportDate = new Date().toISOString().split('T')[0];
-            link.setAttribute("download", `volleyball_passing_stats_${currentTeamId}_${exportDate}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            downloadCSV(csvContent, `volleyball_passing_stats_${currentTeamId}_${todayKey}.csv`);
         };
 
-        const handleDownloadHittingCSV = () => {
+        const handleDownloadPracticeHittingCSV = () => {
             if (playersCache.length === 0) return;
-            let csvContent = "Player Name,Position,Total Kills,Total Errors,Hitting Percentage\n";
+            let csvContent = "Player Name,Position,Total Kills,Total Errors,Total Attempts,Hitting Percentage\n";
             playersCache.forEach(player => {
                 const hittingByDate = player.hittingByDate || {};
                 let totalKills = 0;
@@ -1033,25 +1951,27 @@ const handleDownloadCSV = () => {
                 });
                 const total = totalKills + totalErrors;
                 const percentage = total > 0 ? ((totalKills / total) * 100).toFixed(1) : '0.0';
-                csvContent += `"${player.name}","${player.position || 'N/A'}",${totalKills},${totalErrors},${percentage}%\n`;
+                csvContent += `"${player.name}","${player.position || 'N/A'}",${totalKills},${totalErrors},${total},${percentage}%\n`;
             });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8,' });
+            downloadCSV(csvContent, `volleyball_hitting_stats_${currentTeamId}_${todayKey}.csv`);
+        };
+
+        const downloadCSV = (content, filename) => {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8,' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            const exportDate = new Date().toISOString().split('T')[0];
-            link.setAttribute("download", `volleyball_hitting_stats_${currentTeamId}_${exportDate}.csv`);
+            link.setAttribute("download", filename);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         };
-// Event Listeners
+// Event Listeners - Team Management
         joinTeamBtn.addEventListener('click', handleJoinTeam);
         createTeamBtn.addEventListener('click', handleCreateTeam);
         joinTeamCodeInput.addEventListener('keyup', (e) => { if(e.key === 'Enter') handleJoinTeam(); });
         createTeamCodeInput.addEventListener('keyup', (e) => { if(e.key === 'Enter') handleCreateTeam(); });
-
         switchTeamBtn.addEventListener('click', handleSwitchTeam);
         teamCodeDisplay.addEventListener('click', () => {
             navigator.clipboard.writeText(currentTeamId).then(() => {
@@ -1059,192 +1979,224 @@ const handleDownloadCSV = () => {
                 setTimeout(() => { teamCodeDisplay.title = 'Click to copy'; }, 2000);
             });
         });
+
+        // Event Listeners - Side Panel
+        hamburgerBtn.addEventListener('click', openSidePanel);
+        closeSidePanelBtn.addEventListener('click', closeSidePanel);
+        sidePanelOverlay.addEventListener('click', closeSidePanel);
+        sideAddPlayerBtn.addEventListener('click', handleAddPlayer);
+        sidePlayerNameInput.addEventListener('keyup', (e) => { if(e.key === 'Enter') handleAddPlayer(); });
         
-        // Main section tabs
-        mainPracticeTabBtn.addEventListener('click', () => {
-            practiceContentSection.classList.remove('hidden');
-            gameContentSection.classList.add('hidden');
-            mainPracticeTabBtn.classList.add('active');
-            mainGameTabBtn.classList.remove('active');
-        });
-        
-        mainGameTabBtn.addEventListener('click', () => {
-            practiceContentSection.classList.add('hidden');
-            gameContentSection.classList.remove('hidden');
-            mainPracticeTabBtn.classList.remove('active');
-            mainGameTabBtn.classList.add('active');
-        });
-
-        // Practice sub-section tabs
-        practicePassingBtn.addEventListener('click', () => {
-            passingContentSection.classList.remove('hidden');
-            hittingContentSection.classList.add('hidden');
-            practicePassingBtn.classList.add('active');
-            practiceHittingBtn.classList.remove('active');
-            currentMode = 'passing';
-        });
-
-        practiceHittingBtn.addEventListener('click', () => {
-            passingContentSection.classList.add('hidden');
-            hittingContentSection.classList.remove('hidden');
-            practicePassingBtn.classList.remove('active');
-            practiceHittingBtn.classList.add('active');
-            currentMode = 'hitting';
-        });
-        
-        const subTabs = [ { btn: rosterTabBtn, section: rosterSection }, { btn: statsTabBtn, section: statsSection }, { btn: logTabBtn, section: logSection }, { btn: progressTabBtn, section: progressSection }];
-        subTabs.forEach(tab => {
-            tab.btn.addEventListener('click', () => {
-                subTabs.forEach(t => { t.section.classList.add('hidden'); t.btn.classList.remove('active'); });
-                tab.section.classList.remove('hidden');
-                tab.btn.classList.add('active');
-            });
-        });
-
-        const hittingSubTabs = [ { btn: hittingRosterTabBtn, section: hittingRosterSection }, { btn: hittingStatsTabBtn, section: hittingStatsSection }, { btn: hittingLogTabBtn, section: hittingLogSection }, { btn: hittingProgressTabBtn, section: hittingProgressSection }];
-        hittingSubTabs.forEach(tab => {
-            tab.btn.addEventListener('click', () => {
-                hittingSubTabs.forEach(t => { t.section.classList.add('hidden'); t.btn.classList.remove('active'); });
-                tab.section.classList.remove('hidden');
-                tab.btn.classList.add('active');
-            });
-        });
-        
-        addPlayerBtn.addEventListener('click', handleAddPlayer);
-        playerNameInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') handleAddPlayer(); });
-passingContentSection.addEventListener('click', (e) => {
-            // Handle delete player
-            const deleteBtn = e.target.closest('.delete-player-btn');
-            if (deleteBtn) {
-                handleDeletePlayer(deleteBtn.dataset.id);
-                return;
-            }
-
-            // Handle player name click to see progress
-            const playerNameLink = e.target.closest('.player-name-link');
-            if (playerNameLink) {
-                const playerId = playerNameLink.dataset.playerId;
-                // Switch to progress tab
-                subTabs.forEach(t => {
-                    t.section.classList.add('hidden'); t.btn.classList.remove('active');
-                });
-                progressSection.classList.remove('hidden');
-                progressTabBtn.classList.add('active');
-                
-                // Scroll to chart
-                setTimeout(() => {
-                    const chartElement = document.getElementById(`chart-container-${playerId}`);
-                    if (chartElement) {
-                        chartElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        chartElement.style.transition = 'box-shadow 0.2s ease-in-out';
-                        chartElement.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.5)';
-                        setTimeout(() => { chartElement.style.boxShadow = ''; }, 2000);
-                    }
-                }, 50);
+        sideRosterList.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-player-btn');
+            if (editBtn) {
+                handleEditPlayerPosition(editBtn.dataset.playerId);
             }
         });
 
-        hittingContentSection.addEventListener('click', (e) => {
-            // Handle player name click to see progress
-            const playerNameLink = e.target.closest('.hitting-player-name-link');
-            if (playerNameLink) {
-                const playerId = playerNameLink.dataset.playerId;
-                // Switch to progress tab
-                hittingSubTabs.forEach(t => {
-                    t.section.classList.add('hidden'); t.btn.classList.remove('active');
-                });
-                hittingProgressSection.classList.remove('hidden');
-                hittingProgressTabBtn.classList.add('active');
-                
-                // Scroll to chart
-                setTimeout(() => {
-                    const chartElement = document.getElementById(`hitting-chart-container-${playerId}`);
-                    if (chartElement) {
-                        chartElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        chartElement.style.transition = 'box-shadow 0.2s ease-in-out';
-                        chartElement.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.5)';
-                        setTimeout(() => { chartElement.style.boxShadow = ''; }, 2000);
-                    }
-                }, 50);
-            }
-        });
-        
-        logSection.addEventListener('click', (e) => {
-            const changeDateBtn = e.target.closest('.change-date-btn');
-            if (changeDateBtn) {
-                openDateChangeModal(changeDateBtn.dataset.dateKey);
-                return;
-            }
-
-            const header = e.target.closest('.log-toggle');
-            if (header) {
-                const details = header.nextElementSibling;
-                const icon = header.querySelector('.chevron-icon');
-                details.classList.toggle('hidden');
-                icon.classList.toggle('rotate-180');
+        sidePassingLog.addEventListener('click', (e) => {
+            const logItem = e.target.closest('.log-item');
+            if (logItem && logItem.dataset.type === 'passing') {
+                openDateChangeModal(logItem.dataset.dateKey);
             }
         });
 
-        hittingLogSection.addEventListener('click', (e) => {
-            const header = e.target.closest('.hitting-log-toggle');
-            if (header) {
-                const details = header.nextElementSibling;
-                const icon = header.querySelector('.hitting-chevron-icon');
-                details.classList.toggle('hidden');
-                icon.classList.toggle('rotate-180');
+        // Event Listeners - Mode Dropdown
+        modeDropdownBtn.addEventListener('click', () => {
+            modeDropdownMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!modeDropdownBtn.contains(e.target) && !modeDropdownMenu.contains(e.target)) {
+                modeDropdownMenu.classList.remove('show');
             }
         });
-ratingButtonsContainer.addEventListener('click', (e) => {
+
+        modeDropdownMenu.addEventListener('click', (e) => {
+            const modeOption = e.target.closest('.mode-option');
+            if (modeOption) {
+                switchToMode(modeOption.dataset.mode);
+                modeDropdownMenu.classList.remove('show');
+            }
+        });
+
+        // Event Listeners - Unforced Errors
+        unforcedIncrementCompact.addEventListener('click', () => {
+            unforcedErrorsCount++;
+            unforcedErrorsCountCompact.textContent = unforcedErrorsCount;
+        });
+
+        unforcedDecrementCompact.addEventListener('click', () => {
+            if (unforcedErrorsCount > 0) {
+                unforcedErrorsCount--;
+                unforcedErrorsCountCompact.textContent = unforcedErrorsCount;
+            }
+        });
+
+        // Event Listeners - Practice Mode
+        practicePassingBtn.addEventListener('click', () => switchPracticeTab('passing'));
+        practiceHittingBtn.addEventListener('click', () => switchPracticeTab('hitting'));
+        practiceSplitViewBtn.addEventListener('click', togglePracticeSplitView);
+        practiceSplitSelect.addEventListener('change', updatePracticeSplitView);
+
+        // Event Listeners - Practice Passing
+        ratingButtonsContainer.addEventListener('click', (e) => {
             const button = e.target.closest('.rating-button');
             if (button) { 
                 selectedRating = parseInt(button.dataset.rating, 10); 
-                currentMode = 'passing';
+                currentStatType = 'passing';
                 document.querySelectorAll('.rating-button').forEach(btn => btn.classList.remove('active')); 
                 button.classList.add('active'); 
                 openPlayerSelectModal(); 
             }
         });
 
-        hittingActionButtonsContainer.addEventListener('click', (e) => {
+        // Event Listeners - Practice Hitting
+        practiceHittingActionButtonsContainer.addEventListener('click', (e) => {
             const button = e.target.closest('.hitting-action-button');
             if (button) {
                 selectedHittingAction = button.dataset.action;
-                currentMode = 'hitting';
+                currentStatType = 'hitting';
                 document.querySelectorAll('.hitting-action-button').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
                 openPlayerSelectModal();
             }
         });
-        
+
+        // Event Listeners - Undo Last Stat
+        document.addEventListener('click', (e) => {
+            const undoBtn = e.target.closest('.undo-stat-btn');
+            if (undoBtn) {
+                const playerId = undoBtn.dataset.playerId;
+                if (confirm('Undo the last stat for this player?')) {
+                    undoLastStat(playerId);
+                }
+            }
+        });
+
+        // Event Listeners - CSV Downloads
+        practicePassingDownloadCsvBtn.addEventListener('click', handleDownloadPracticePassingCSV);
+        practiceHittingDownloadCsvBtn.addEventListener('click', handleDownloadPracticeHittingCSV);
+
+        // Event Listeners - Game Mode
+        addGameBtn.addEventListener('click', openNewGameModal);
+        daySummaryBtn.addEventListener('click', switchToDaySummary);
+        gameSplitViewBtn.addEventListener('click', toggleGameSplitView);
+        gameSplitGameSelect.addEventListener('change', updateGameSplitView);
+        gameSplitTypeSelect.addEventListener('change', updateGameSplitView);
+
+        gameTabsContainer.addEventListener('click', (e) => {
+            const gameTabBtn = e.target.closest('.game-tab-btn');
+            if (gameTabBtn) {
+                switchToGame(gameTabBtn.dataset.gameId);
+            }
+        });
+
+        // Event Listeners - Game Content (delegated)
+        gameContentArea.addEventListener('click', (e) => {
+            // Game stat type tabs
+            const statTypeBtn = e.target.closest('.game-stat-type-btn');
+            if (statTypeBtn && currentGameId) {
+                const passingSection = document.getElementById(`game-passing-section-${currentGameId}`);
+                const hittingSection = document.getElementById(`game-hitting-section-${currentGameId}`);
+                const passingBtn = document.getElementById(`game-passing-tab-${currentGameId}`);
+                const hittingBtn = document.getElementById(`game-hitting-tab-${currentGameId}`);
+                
+                if (statTypeBtn === passingBtn) {
+                    passingSection.classList.remove('hidden');
+                    hittingSection.classList.add('hidden');
+                    passingBtn.classList.remove('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
+                    passingBtn.classList.add('bg-blue-600', 'text-white');
+                    hittingBtn.classList.remove('bg-red-600', 'text-white');
+                    hittingBtn.classList.add('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
+                    currentGameStatType = 'passing';
+                } else if (statTypeBtn === hittingBtn) {
+                    passingSection.classList.add('hidden');
+                    hittingSection.classList.remove('hidden');
+                    hittingBtn.classList.remove('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
+                    hittingBtn.classList.add('bg-red-600', 'text-white');
+                    passingBtn.classList.remove('bg-blue-600', 'text-white');
+                    passingBtn.classList.add('bg-white', 'text-gray-700', 'border-2', 'border-gray-300');
+                    currentGameStatType = 'hitting';
+                }
+            }
+
+            // Game rating buttons
+            const gameRatingBtn = e.target.closest('.game-rating-button');
+            if (gameRatingBtn) {
+                selectedRating = parseInt(gameRatingBtn.dataset.rating, 10);
+                currentStatType = 'passing';
+                document.querySelectorAll('.game-rating-button').forEach(btn => btn.classList.remove('active'));
+                gameRatingBtn.classList.add('active');
+                openPlayerSelectModal();
+            }
+
+            // Game hitting action buttons
+            const gameHittingBtn = e.target.closest('.game-hitting-action-button');
+            if (gameHittingBtn) {
+                selectedHittingAction = gameHittingBtn.dataset.action;
+                currentStatType = 'hitting';
+                document.querySelectorAll('.game-hitting-action-button').forEach(btn => btn.classList.remove('active'));
+                gameHittingBtn.classList.add('active');
+                openPlayerSelectModal();
+            }
+        });
+
+        // Event Listeners - Split View Buttons (delegated)
+        document.addEventListener('click', (e) => {
+            // Split view rating buttons
+            const splitRatingBtn = e.target.closest('.split-rating-button');
+            if (splitRatingBtn) {
+                selectedRating = parseInt(splitRatingBtn.dataset.rating, 10);
+                currentStatType = 'passing';
+                document.querySelectorAll('.split-rating-button').forEach(btn => btn.classList.remove('active'));
+                splitRatingBtn.classList.add('active');
+                openPlayerSelectModal();
+            }
+
+            // Split view hitting buttons
+            const splitHittingBtn = e.target.closest('.split-hitting-button');
+            if (splitHittingBtn) {
+                selectedHittingAction = splitHittingBtn.dataset.action;
+                currentStatType = 'hitting';
+                document.querySelectorAll('.split-hitting-button').forEach(btn => btn.classList.remove('active'));
+                splitHittingBtn.classList.add('active');
+                openPlayerSelectModal();
+            }
+        });
+
+        // Event Listeners - Modals
         modalPlayerList.addEventListener('click', (e) => { 
             const button = e.target.closest('.player-select-btn'); 
-            if (button) { handleAssignPass(button.dataset.id); } 
+            if (button) { 
+                if (currentStatType === 'passing') {
+                    handleAssignPass(button.dataset.id);
+                } else if (currentStatType === 'hitting') {
+                    handleAssignHit(button.dataset.id);
+                }
+            } 
         });
         modalCancelBtn.addEventListener('click', closePlayerSelectModal);
-        
+
         dateChangeCancelBtn.addEventListener('click', closeDateChangeModal);
         dateChangeSaveBtn.addEventListener('click', handleDateChangeSave);
-        
-        downloadCsvBtn.addEventListener('click', handleDownloadCSV);
-        hittingDownloadCsvBtn.addEventListener('click', handleDownloadHittingCSV);
 
-        // Unforced Errors Counter
-        unforcedErrorsIncrementBtn.addEventListener('click', () => {
-            unforcedErrorsCountEl.textContent = parseInt(unforcedErrorsCountEl.textContent) + 1;
+        editPositionCancelBtn.addEventListener('click', () => {
+            editPositionModal.classList.add('hidden');
+            editingPlayerId = null;
         });
-
-        unforcedErrorsDecrementBtn.addEventListener('click', () => {
-            const current = parseInt(unforcedErrorsCountEl.textContent);
-            if (current > 0) {
-                unforcedErrorsCountEl.textContent = current - 1;
+        editPositionSaveBtn.addEventListener('click', handleSavePlayerPosition);
+        editPositionDeleteBtn.addEventListener('click', () => {
+            if (editingPlayerId) {
+                handleDeletePlayer(editingPlayerId);
+                editPositionModal.classList.add('hidden');
+                editingPlayerId = null;
             }
         });
 
-        unforcedErrorsResetBtn.addEventListener('click', () => {
-            if (confirm('Reset the counter to 0?')) {
-                unforcedErrorsCountEl.textContent = '0';
-            }
-        });
+        newGameCancelBtn.addEventListener('click', closeNewGameModal);
+        newGameCreateBtn.addEventListener('click', handleCreateGame);
+        newGameNameInput.addEventListener('keyup', (e) => { if(e.key === 'Enter') handleCreateGame(); });
 
         // App Initialization
         async function initApp() {
